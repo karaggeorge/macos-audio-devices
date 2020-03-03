@@ -64,7 +64,7 @@ if (targetDevice.hasVolume) {
 
 ### API
 
-#### Device
+#### `Device`
 
 ##### `id: number`
 
@@ -155,7 +155,3 @@ The volume level to set the device to. Must be between 0 and 1, otherwise and er
 If you want to use this and need more features or find a bug, please open an issue and I'll do my best to implement.
 
 PRs are always welcome as well 😃
-
-## License
-
-MIT
