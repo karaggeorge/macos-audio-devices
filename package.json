@@ -1,0 +1,55 @@
+{
+  "name": "macos-audio-devices",
+  "version": "1.0.0",
+  "description": "Get, set and configure the Audio Devices on macOS",
+  "repository": "https://github.com/karaggeorge/macos-audio-devices",
+  "author": {
+    "name": "George Karagkiaouris",
+    "email": "gkaragkiaouris2@gmail.com",
+    "url": "https://gkaragkiaouris.tech"
+  },
+  "bin": {
+    "macos-audio-devices": "./audio-devices",
+    "audio-devices": "./audio-devices"
+  },
+  "license": "MIT",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "audio-devices"
+  ],
+  "scripts": {
+    "test": "xo && tsd",
+    "build": "swift build --configuration=release && mv .build/release/audio-devices .",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "macos",
+    "swift",
+    "audio",
+    "devices",
+    "input",
+    "output",
+    "volume",
+    "mute",
+    "microphone",
+    "speaker",
+    "list",
+    "default"
+  ],
+  "engines": {
+    "node": ">=8"
+  },
+  "dependencies": {
+    "electron-util": "^0.13.1",
+    "execa": "^4.0.0",
+    "macos-version": "^5.2.0"
+  },
+  "devDependencies": {
+    "tsd": "^0.11.0",
+    "xo": "^0.25.3"
+  },
+  "xo": {
+    "space": 2
+  }
+}
