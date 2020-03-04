@@ -1,6 +1,6 @@
 {
   "name": "macos-audio-devices",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Get, set and configure the Audio Devices on macOS",
   "repository": "https://github.com/karaggeorge/macos-audio-devices",
   "author": {
