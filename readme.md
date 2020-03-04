@@ -28,7 +28,9 @@ Usage: audio-devices <command> [options]
 Groups:
   output          Get or set the default output device
   input           Get or set the default input device
+  system          Get or set the default device for system sounds
   volume          Get or set the volume of an output device
+  aggregate       Create or delete aggregate audio devices
 
 Commands:
   list            List the available audio devices
