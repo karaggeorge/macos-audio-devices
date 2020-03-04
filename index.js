@@ -36,6 +36,11 @@ module.exports.getDefaultInputDevice = () => {
   return JSON.parse(stdout);
 };
 
+module.exports.getDefaultSystemDevice = () => {
+  const {stdout} = execa.sync(binary, ['system', 'get', '-j']);
+  return JSON.parse(stdout);
+};
+
 module.exports.setDefaultOutputDevice = deviceId => {
   const {stderr} = execa.sync(binary, ['output', 'set', deviceId]);
 
@@ -52,6 +57,14 @@ module.exports.setDefaultInputDevice = deviceId => {
   }
 };
 
+module.exports.setDefaultSystemDevice = deviceId => {
+  const {stderr} = execa.sync(binary, ['system', 'set', deviceId]);
+
+  if (stderr) {
+    throw new Error(stderr);
+  }
+};
+
 module.exports.getOutputDeviceVolume = deviceId => {
   const {stdout, stderr} = execa.sync(binary, ['volume', 'get', deviceId]);
   return stderr ? undefined : stdout;
@@ -59,6 +72,26 @@ module.exports.getOutputDeviceVolume = deviceId => {
 
 module.exports.setOutputDeviceVolume = (deviceId, volume) => {
   const {stderr} = execa.sync(binary, ['volume', 'set', deviceId, volume]);
+
+  if (stderr) {
+    throw new Error(stderr);
+  }
+};
+
+module.exports.createAggregateDevice = (name, mainDeviceId, otherDeviceIds, {multiOutput} = {}) => {
+  const {stderr, stdout} = execa.sync(binary, [
+    'aggregate', 'create', '-j', (multiOutput && '-m'), name, mainDeviceId, ...otherDeviceIds
+  ].filter(Boolean));
+
+  if (stderr) {
+    throw new Error(stderr);
+  }
+
+  return JSON.parse(stdout);
+};
+
+module.exports.destroyAggregateDevice = deviceId => {
+  const {stderr} = execa.sync(binary, ['aggregate', 'destroy', deviceId]);
 
   if (stderr) {
     throw new Error(stderr);

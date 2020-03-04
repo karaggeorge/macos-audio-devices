@@ -43,6 +43,7 @@ class AudioDeviceType {
 
   static let input = AudioDeviceType(selector: kAudioHardwarePropertyDefaultInputDevice)
   static let output = AudioDeviceType(selector: kAudioHardwarePropertyDefaultOutputDevice)
+  static let system = AudioDeviceType(selector: kAudioHardwarePropertyDefaultSystemOutputDevice)
 }
 
 class AudioDevices {
@@ -132,7 +133,7 @@ class AudioDevices {
 
     if json {
       do {
-        print(try toJson(devices))
+        print(try toJson(devices.filter { ($0.isInput && !outputOnly) || ($0.isOutput && !inputOnly) }))
       } catch {
         print("[]")
       }
@@ -174,32 +175,36 @@ class AudioDevices {
       return
     }
 
-    let device = getAudioDevice(deviceId)
-
-    guard let unwrappedDevice = device else {
+    guard let device = getAudioDevice(deviceId) else {
       print("Something went wrong", to: .standardError)
       return
     }
     
     if json {
       do {
-        print(try toJson(unwrappedDevice))
+        print(try toJson(device))
       } catch {
         print("{}")
       }
       return
     }
 
-    unwrappedDevice.print(showVolume: deviceType.selector == kAudioHardwarePropertyDefaultOutputDevice)
+    device.print(showVolume: deviceType.selector == kAudioHardwarePropertyDefaultOutputDevice)
   }
 
   static func setDefaultDevice(deviceType: AudioDeviceType, deviceId: Int) {
     var id = UInt32(deviceId)
 
-    let device = getAudioDevice(id)
-
-    guard let unwrappedDevice = device else {
+    guard let device = getAudioDevice(id) else {
       print("Device with id \(id) does not exist", to: .standardError)
+      return;
+    }
+
+    guard
+      deviceType.selector != kAudioHardwarePropertyDefaultSystemOutputDevice ||
+      device.isOutput
+    else {
+      print("Device with id \(id) is not an output device", to: .standardError)
       return;
     }
 
@@ -211,23 +216,21 @@ class AudioDevices {
       return
     }
 
-    print("Set \(unwrappedDevice.name) as the default")
+    print("Set \(device.name) as the default")
   }
 
   static func getDeviceVolume(deviceId: Int) {
-    let device = getAudioDevice(UInt32(deviceId))
-    
-    guard let unwrappedDevice = device else {
+    guard let device = getAudioDevice(UInt32(deviceId)) else {
       print("Device with id \(deviceId) does not exist", to: .standardError)
       return;
     }
 
-    guard unwrappedDevice.hasVolume else {
-      print("Device \(unwrappedDevice.name) does not support volume", to: .standardError)
+    guard device.hasVolume else {
+      print("Device \(device.name) does not support volume", to: .standardError)
       return;
     }
 
-    print(String(format: "%.2f", unwrappedDevice.volume))
+    print(String(format: "%.2f", device.volume))
   }
 
   static func setDeviceVolume(deviceId: Int, volume: Float) {
@@ -235,22 +238,20 @@ class AudioDevices {
       print("Volume must be a between 0 and 1", to: .standardError)
       return
     }
-
-    let device = getAudioDevice(UInt32(deviceId))
     
-    guard let unwrappedDevice = device else {
+    guard let device = getAudioDevice(UInt32(deviceId)) else {
       print("Device with id \(deviceId) does not exist", to: .standardError)
       return;
     }
 
-    guard unwrappedDevice.hasVolume else {
-      print("Device \(unwrappedDevice.name) does not support volume", to: .standardError)
+    guard device.hasVolume else {
+      print("Device \(device.name) does not support volume", to: .standardError)
       return;
     }
 
     var value = volume;
     guard setAudioData(
-      id: unwrappedDevice.id,
+      id: device.id,
       selector: kAudioDevicePropertyVolumeScalar,
       scope: kAudioDevicePropertyScopeOutput,
       value: &value
@@ -259,7 +260,75 @@ class AudioDevices {
       return
     }
 
-    print("Set volume for \(unwrappedDevice.name) to \(volume)")
+    print("Set volume for \(device.name) to \(volume)")
+  }
+
+  static func createAggregate(name: String, mainId: Int, otherIds: [Int], json: Bool = false, stack: Bool = false) {
+    guard let mainDevice = getAudioDevice(UInt32(mainId)) else {
+      print("Device with id \(mainId) does not exist", to: .standardError)
+      return;
+    }
+
+    let otherDevices = otherIds.map { (id) -> AudioDevice in
+      guard let device = getAudioDevice(UInt32(id)) else {
+        print("Device with id \(id) does not exist", to: .standardError)
+        exit(1)
+      }
+
+      return device
+    }
+
+    let allDevices = [mainDevice] + otherDevices
+    let deviceList = allDevices.map {
+      return [
+        kAudioSubDeviceUIDKey: $0.uid,
+        kAudioSubDeviceDriftCompensationKey: $0.id == mainDevice.id ? 0 : 1
+      ]
+    }
+
+    let description: [String: Any] = [
+      kAudioAggregateDeviceNameKey: name,
+      kAudioAggregateDeviceUIDKey: UUID().uuidString,
+      kAudioAggregateDeviceSubDeviceListKey: deviceList,
+      kAudioAggregateDeviceMasterSubDeviceKey: mainDevice.uid,
+      kAudioAggregateDeviceIsStackedKey: stack ? 1 : 0,
+    ]
+
+    var aggregateDeviceId: AudioDeviceID = 0
+
+    guard AudioHardwareCreateAggregateDevice(description as CFDictionary, &aggregateDeviceId) == 0 else {
+      print("Something went wrong", to: .standardError)
+      return;
+    }
+
+    guard let aggregateDevice = getAudioDevice(aggregateDeviceId) else {
+      print("Something went wrong", to: .standardError)
+      return;
+    }
+
+    if json {
+      do {
+        print(try toJson(aggregateDevice))
+      } catch {
+        print("{}")
+      }
+    } else {
+      print("Device \(aggregateDevice.name) (\(aggregateDevice.id)) was created")
+    }
+  }
+
+  static func destroyAggregate(deviceId: Int) {
+    guard let device = getAudioDevice(UInt32(deviceId)) else {
+      print("Device with id \(deviceId) does not exist", to: .standardError)
+      return;
+    }
+
+    guard AudioHardwareDestroyAggregateDevice(UInt32(deviceId)) == 0 else {
+      print("Something went wrong", to: .standardError)
+      return;
+    }
+
+    print("Deleted device \(device.name) successfully")
   }
 }
 

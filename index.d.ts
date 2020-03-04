@@ -70,6 +70,18 @@ const defaultInputDevice = getDefaultInputDevice()
 export const getDefaultInputDevice: () => Device;
 
 /**
+Get the default system sound effects device
+
+@example
+```
+const defaultSystemDevice = getDefaultSystemDevice()
+```
+
+@returns The default system device.
+*/
+export const getDefaultSystemDevice: () => Device;
+
+/**
 Set the default output device
 
 @example
@@ -92,6 +104,18 @@ setDefaultInputDevice(74)
 @param deviceId - The ID of the input device to set as the default
 */
 export const setDefaultInputDevice: (deviceId: number) => void;
+
+/**
+Set the default system sound effects device (only output devices)
+
+@example
+```
+setDefaultSystemDevice(74)
+```
+
+@param deviceId - The ID of the output device to set as the default for system sounds
+*/
+export const setDefaultSystemDevice: (deviceId: number) => void;
 
 /**
 Get the volume of an output device that supports it
@@ -118,6 +142,35 @@ setOutputDeviceVolume(74, 0.5)
 @param voluem - The voume level between 0 and 1
 */
 export const setOutputDeviceVolume: (deviceId: number, volume: number) => void;
+
+/**
+Create an aggregate device from other existing devices.
+
+@example
+```
+const aggregateDevice = createAggregateDevice("My Aggregate Device", 74, [81, 86], {multiOutput: true});
+```
+
+@param name - The name of the aggregate device
+@param mainDeviceId - The id of main device
+@param otherDeviceIds - Array of the rest of the device ids to combine
+@param options.multiOutput - Wether to create the device as a Multi-Output Device
+@returns The newly created aggregate device
+*/
+export const createAggregateDevice: (name: string, mainDeviceId: number, otherDeviceIds: number[], options?: {multiOutput: boolean}) => Device;
+
+/**
+Destroy an aggregate device
+
+@example
+```
+destroyAggregateDevice(74)
+```
+
+@param deviceId - The ID of the output device
+*/
+export const destroyAggregateDevice: (deviceId: number) => void;
+
 
 /**
 Whether or not this module is supported.

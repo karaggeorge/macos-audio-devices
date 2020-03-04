@@ -77,6 +77,33 @@ class SetInputCommand: Command {
   }
 }
 
+class SystemGroup: CommandGroup {
+  let shortDescription = "Get or set the default device for system sounds"
+  let name = "system"
+  let children = [GetSystemCommand(), SetSystemCommand()] as [Routable]
+}
+
+class GetSystemCommand: Command {
+  let name = "get"
+  
+  @Flag("-j", "--json", description: "Print the result in json format")
+  var json: Bool
+
+  func execute() throws {
+    AudioDevices.getDefaultDevice(deviceType: .system, json: json)
+  }
+}
+
+class SetSystemCommand: Command {
+  let name = "set"
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    AudioDevices.setDefaultDevice(deviceType: .system, deviceId: deviceId)
+  }
+}
+
 class VolumeGroup: CommandGroup {
   let shortDescription = "Get or set the volume of an output device"
   let name = "volume"
@@ -104,6 +131,42 @@ class SetVolumeCommand: Command {
   }
 }
 
+class AggregateGroup: CommandGroup {
+  let shortDescription = "Create or delete aggregate audio devices"
+  let name = "aggregate"
+  let children = [CreateAggregate(), DestroyAggregate()] as [Routable]
+}
+
+class CreateAggregate: Command {
+  let name = "create"
+  let shortDescription = "Create an aggregate device using existing devices"
+
+  @Flag("-j", "--json", description: "Print the result in json format")
+  var json: Bool
+
+  @Flag("-m", "--multi-output", description: "Create the aggregate device as a Multi-Output Device")
+  var stack: Bool
+
+  @Param var deviceName: String
+  @Param var mainDeviceId: Int
+  @CollectedParam(minCount: 1) var deviceIds: [Int]
+
+  func execute() throws {
+    AudioDevices.createAggregate(name: deviceName, mainId: mainDeviceId, otherIds: deviceIds, json: json, stack: stack)
+  }
+}
+
+class DestroyAggregate: Command {
+  let name = "destroy"
+  let shortDescription = "Destory a created aggregate device"
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    AudioDevices.destroyAggregate(deviceId: deviceId)
+  }
+}
+
 let audioDevices = CLI(name: "audio-devices")
-audioDevices.commands = [ListCommand(), OutputGroup(), InputGroup(), VolumeGroup()]
+audioDevices.commands = [ListCommand(), OutputGroup(), InputGroup(), SystemGroup(), VolumeGroup(), AggregateGroup()]
 _ = audioDevices.go()

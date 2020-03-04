@@ -114,6 +114,10 @@ Get all the default output device
 
 Get all the default input device
 
+#### `getDefaultSystemDevice(): Device`
+
+Get all the default input device
+
 #### `setDefaultOutputDevice(deviceId: number): void`
 
 Set the default output device.
@@ -129,6 +133,14 @@ Set the default input device.
 ##### `deviceId: number`
 
 The [unique id](#id-number) of an input device
+
+#### `setDefaultSystemDevice(deviceId: number): void`
+
+Set the default input device. Can only be an output device
+
+##### `deviceId: number`
+
+The [unique id](#id-number) of an output device
 
 #### `getOutputDeviceVolume(deviceId: number): void`
 
@@ -149,6 +161,39 @@ The [unique id](#id-number) of the supported output device
 ##### `volume: number`
 
 The volume level to set the device to. Must be between 0 and 1, otherwise and error will be thrown.
+
+#### `createAggregateDevice(name: string, mainDeviceId: number, otherDeviceIds: number[], options: object): Device`
+
+Create an [aggregate device](https://support.apple.com/en-us/HT202000).
+Note that aggregate devices do not support volume, so make sure to update the volume on the devices used to create it instead.
+
+##### `name: string`
+
+Human-readable name for the new device
+
+##### `mainDeviceId: number`
+
+The [unique id](#id-number) of the main device
+
+##### `otherDeviceIds: number[]`
+
+An array od [unique ids](#id-number) of the rest of the devices. Needs to have at least one
+
+##### `options: object`
+
+###### `options.multiOutput: boolean`
+
+Whether or not to create a [Multi-Output Device](https://support.apple.com/guide/audio-midi-setup/play-audio-through-multiple-devices-at-once-ams7c093f372/mac).
+
+If this is enabled, all the devices need to be output devices.
+
+#### `destroyAggregateDevice(deviceId: number): void`
+
+Destroy an aggregate device
+
+##### `deviceId: number`
+
+The [unique id](#id-number) of an aggregate device
 
 ## Contributing
 
