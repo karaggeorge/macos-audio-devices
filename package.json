@@ -3,6 +3,7 @@
   "version": "1.2.3",
   "description": "Get, set and configure the audio devices on macOS",
   "repository": "https://github.com/karaggeorge/macos-audio-devices",
+  "funding": "https://github.com/sponsors/karaggeorge",
   "author": {
     "name": "George Karagkiaouris",
     "email": "gkaragkiaouris2@gmail.com",
