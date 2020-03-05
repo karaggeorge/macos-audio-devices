@@ -50,10 +50,10 @@ $ npm install macos-audio-devices
 ```js
 const audioDevices = require('macos-audio-devices');
 
-const outputDevices = audioDevices.getOutputDevices();
+const outputDevices = audioDevices.getOutputDevices.sync();
 const targetDevice = outputDevices[0];
 
-const defaultDevice = audioDevices.getDefaultOutputDevice();
+const defaultDevice = audioDevices.getDefaultOutputDevice.sync();
 
 if (defaultDevice.id !== targetDevice.id) {
   setDefaultOutputDevice(targetDevice.id)
@@ -70,7 +70,7 @@ if (targetDevice.hasVolume) {
 
 ##### `id: number`
 
-The unique id of the device 
+The unique id of the device
 
 ##### `uid: string`
 
@@ -88,39 +88,53 @@ Whether the device is an output device
 
 Whether the device is an input device
 
-##### `hasVolume: bool`
-
-Whether the device supports volume. Only applicable to output devices.
-
 ##### `volume: number`
 
-A number between 0 and 1 representing the volume setting of the device. Only applicable on output devices that have `hasVolume` of `true`.
+A number between 0 and 1 representing the volume setting of the device. Only applicable on output devices that support it. It will be undefined otherwise.
 
-#### `getAllDevices(): Device[]`
+#### Sync
+
+Each method described below is asynchronous, but can be called synchronously, by calling `.sync` on it instead. For example:
+
+```js
+getDevice(73).then(device => {...}); // async
+
+const device = getDevice.sync(73); //sync
+```
+
+#### `getAllDevices(): Promise<Device[]>`
 
 Get all the audio devices
 
-#### `getOutputDevices(): Device[]`
+#### `getOutputDevices(): Promise<Device[]>`
 
 Get all the output devices
 
-#### `getInputDevices(): Device[]`
+#### `getInputDevices(): Promise<Device[]>`
 
 Get all the input devices
 
-#### `getDefaultOutputDevice(): Device`
+#### `getDevice(deviceId: number): Promise<Device>`
+
+Get an audio device by its id
+
+##### `deviceId: number`
+
+The [unique id](#id-number) of the device
+
+#### `getDefaultOutputDevice(): Promise<Device>`
 
 Get all the default output device
 
-#### `getDefaultInputDevice(): Device`
+#### `getDefaultInputDevice(): Promise<Device>`
 
 Get all the default input device
 
-#### `getDefaultSystemDevice(): Device`
+#### `getDefaultSystemDevice(): Promise<Device>`
 
 Get all the default input device
 
-#### `setDefaultOutputDevice(deviceId: number): void`
+#### `setDefaultOutputDevice(deviceId: number): Promise<void>`
 
 Set the default output device.
 
@@ -128,7 +142,7 @@ Set the default output device.
 
 The [unique id](#id-number) of an output device
 
-#### `setDefaultInputDevice(deviceId: number): void`
+#### `setDefaultInputDevice(deviceId: number): Promise<void>`
 
 Set the default input device.
 
@@ -136,7 +150,7 @@ Set the default input device.
 
 The [unique id](#id-number) of an input device
 
-#### `setDefaultSystemDevice(deviceId: number): void`
+#### `setDefaultSystemDevice(deviceId: number): Promise<void>`
 
 Set the default input device. Can only be an output device
 
@@ -144,17 +158,17 @@ Set the default input device. Can only be an output device
 
 The [unique id](#id-number) of an output device
 
-#### `getOutputDeviceVolume(deviceId: number): void`
+#### `getOutputDeviceVolume(deviceId: number): Promise<void>`
 
-Get the volume level of an output device that supports it. Throws an error if the device is not an output device or it doesn't support volume.
+Get the volume level of an output device that [supports it](#volume-number). Throws an error if the device is not an output device or it doesn't support volume.
 
 ##### `deviceId: number`
 
 The [unique id](#id-number) of the supported output device
 
-#### `setOutputDeviceVolume(deviceId: number, volume: number): void`
+#### `setOutputDeviceVolume(deviceId: number, volume: number): Promise<void>`
 
-Set the volume level of an output device that supports it. Throws an error if the device is not an output device or it doesn't support volume.
+Set the volume level of an output device that [supports it](#volume-number). Throws an error if the device is not an output device or it doesn't support volume.
 
 ##### `deviceId: number`
 
@@ -164,7 +178,7 @@ The [unique id](#id-number) of the supported output device
 
 The volume level to set the device to. Must be between 0 and 1, otherwise and error will be thrown.
 
-#### `createAggregateDevice(name: string, mainDeviceId: number, otherDeviceIds: number[], options: object): Device`
+#### `createAggregateDevice(name: string, mainDeviceId: number, otherDeviceIds: number[], options: object): Promise<Device>`
 
 Create an [aggregate device](https://support.apple.com/en-us/HT202000).
 Note that aggregate devices do not support volume, so make sure to update the volume on the devices used to create it instead.
@@ -189,7 +203,7 @@ Whether or not to create a [Multi-Output Device](https://support.apple.com/guide
 
 If this is enabled, all the devices need to be output devices.
 
-#### `destroyAggregateDevice(deviceId: number): void`
+#### `destroyAggregateDevice(deviceId: number): Promise<void>`
 
 Destroy an aggregate device
 

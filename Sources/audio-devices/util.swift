@@ -1,7 +1,7 @@
 import Foundation
 import Cocoa
 
-func toJson<T:Encodable>(_ data: T) throws -> String {
+func toJson<T: Encodable>(_ data: T) throws -> String {
   let jsonData = try JSONEncoder().encode(data)
   return String(data: jsonData, encoding: .utf8)!
 }

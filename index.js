@@ -2,98 +2,62 @@
 const path = require('path');
 const execa = require('execa');
 const electronUtil = require('electron-util/node');
-const macosVersion = require('macos-version');
 
 const binary = path.join(electronUtil.fixPathForAsarUnpack(__dirname), 'audio-devices');
 
-const isSupported = macosVersion.isGreaterThanOrEqualTo('10.14.4');
+const generateExport = (name, getArgs, callback) => {
+  module.exports[name] = async (...inputs) => {
+    const result = await execa(binary, getArgs(...inputs));
+    return callback(result);
+  };
 
-const getAllDevices = () => {
-  const {stdout} = execa.sync(binary, ['list', '-j']);
+  module.exports[name].sync = (...inputs) => {
+    const result = execa.sync(binary, getArgs(...inputs));
+    return callback(result);
+  };
+};
+
+const throwIfStderr = ({stderr}) => {
+  if (stderr) {
+    throw new Error(stderr);
+  }
+};
+
+const parseStdout = ({stdout, stderr}) => {
+  throwIfStderr({stderr});
   return JSON.parse(stdout);
 };
 
-module.exports = {
-  getAllDevices,
-  isSupported
-};
+generateExport('getAllDevices', () => ['list', '--json'], parseStdout);
 
-module.exports.getInputDevices = () => {
-  return getAllDevices().filter(device => device.isInput);
-};
+generateExport('getInputDevices', () => ['list', '--input', '--json'], parseStdout);
 
-module.exports.getOutputDevices = () => {
-  return getAllDevices().filter(device => device.isOutput);
-};
+generateExport('getOutputDevices', () => ['list', '--output', '--json'], parseStdout);
 
-module.exports.getDefaultOutputDevice = () => {
-  const {stdout} = execa.sync(binary, ['output', 'get', '-j']);
-  return JSON.parse(stdout);
-};
+generateExport('getDevice', deviceId => ['get', '--json', deviceId], parseStdout);
 
-module.exports.getDefaultInputDevice = () => {
-  const {stdout} = execa.sync(binary, ['input', 'get', '-j']);
-  return JSON.parse(stdout);
-};
+generateExport('getDefaultOutputDevice', () => ['output', 'get', '--json'], parseStdout);
 
-module.exports.getDefaultSystemDevice = () => {
-  const {stdout} = execa.sync(binary, ['system', 'get', '-j']);
-  return JSON.parse(stdout);
-};
+generateExport('getDefaultInputDevice', () => ['input', 'get', '--json'], parseStdout);
 
-module.exports.setDefaultOutputDevice = deviceId => {
-  const {stderr} = execa.sync(binary, ['output', 'set', deviceId]);
+generateExport('getDefaultSystemDevice', () => ['system', 'get', '--json'], parseStdout);
 
-  if (stderr) {
-    throw new Error(stderr);
-  }
-};
+generateExport('setDefaultOutputDevice', deviceId => ['output', 'set', deviceId], throwIfStderr);
 
-module.exports.setDefaultInputDevice = deviceId => {
-  const {stderr} = execa.sync(binary, ['input', 'set', deviceId]);
+generateExport('setDefaultInputDevice', deviceId => ['input', 'set', deviceId], throwIfStderr);
 
-  if (stderr) {
-    throw new Error(stderr);
-  }
-};
+generateExport('setDefaultSystemDevice', deviceId => ['system', 'set', deviceId], throwIfStderr);
 
-module.exports.setDefaultSystemDevice = deviceId => {
-  const {stderr} = execa.sync(binary, ['system', 'set', deviceId]);
+generateExport('getOutputDeviceVolume', deviceId => ['volume', 'get', deviceId], ({stdout, stderr}) => stderr ? undefined : stdout);
 
-  if (stderr) {
-    throw new Error(stderr);
-  }
-};
+generateExport('setOutputDeviceVolume', (deviceId, volume) => ['volume', 'set', deviceId, volume], throwIfStderr);
 
-module.exports.getOutputDeviceVolume = deviceId => {
-  const {stdout, stderr} = execa.sync(binary, ['volume', 'get', deviceId]);
-  return stderr ? undefined : stdout;
-};
+generateExport(
+  'createAggregateDevice',
+  (name, mainDeviceId, otherDeviceIds, {multiOutput} = {}) => [
+    'aggregate', 'create', '-json', (multiOutput && '--multi-output'), name, mainDeviceId, ...otherDeviceIds
+  ].filter(Boolean),
+  parseStdout
+);
 
-module.exports.setOutputDeviceVolume = (deviceId, volume) => {
-  const {stderr} = execa.sync(binary, ['volume', 'set', deviceId, volume]);
-
-  if (stderr) {
-    throw new Error(stderr);
-  }
-};
-
-module.exports.createAggregateDevice = (name, mainDeviceId, otherDeviceIds, {multiOutput} = {}) => {
-  const {stderr, stdout} = execa.sync(binary, [
-    'aggregate', 'create', '-j', (multiOutput && '-m'), name, mainDeviceId, ...otherDeviceIds
-  ].filter(Boolean));
-
-  if (stderr) {
-    throw new Error(stderr);
-  }
-
-  return JSON.parse(stdout);
-};
-
-module.exports.destroyAggregateDevice = deviceId => {
-  const {stderr} = execa.sync(binary, ['aggregate', 'destroy', deviceId]);
-
-  if (stderr) {
-    throw new Error(stderr);
-  }
-};
+generateExport('destroyAggregateDevice', deviceId => ['aggregate', 'destroy', deviceId], throwIfStderr);

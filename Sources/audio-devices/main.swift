@@ -1,10 +1,27 @@
 import Cocoa
 import SwiftCLI
 
+func printDevice(_ device: AudioDevice) {
+  print("\(device.id) - \(device.name)")
+}
+
+func getDevice(deviceId: Int) -> AudioDevice {
+  do {
+    let device = try AudioDevice(withId: UInt32(deviceId))
+    return device
+  } catch AudioDevicesError.invalidDeviceId {
+    print("No device exists with id \(deviceId)", to: .standardError)
+    exit(1)
+  } catch {
+    print("Something went wrong \(error)", to: .standardError)
+    exit(1)
+  }
+}
+
 class ListCommand: Command {
   let name = "list"
   let shortDescription = "List the available audio devices"
-  
+
   @Flag("-i", "--input", description: "Only list input devices")
   var inputOnly: Bool
 
@@ -19,7 +36,63 @@ class ListCommand: Command {
   }
 
   func execute() throws {
-    AudioDevices.listAudioDevices(inputOnly: inputOnly, outputOnly: outputOnly, json: json)
+    var devices = AudioDevices.getAudioDevices()
+
+    if inputOnly {
+      devices = devices.filter { $0.isInput }
+    }
+
+    if outputOnly {
+      devices = devices.filter { $0.isOutput }
+    }
+
+    if json {
+      do {
+        print(try toJson(devices))
+      } catch {
+        print("[]")
+      }
+      return
+    }
+
+    if !outputOnly {
+      print("Input Devices\n")
+      devices.filter { $0.isInput }.forEach { printDevice($0) }
+
+      if !inputOnly {
+        print("\n")
+      }
+    }
+
+    if !inputOnly {
+      print("Output Devices\n")
+      devices.filter { $0.isOutput }.forEach { printDevice($0) }
+    }
+  }
+}
+
+class GetCommand: Command {
+  let name = "get"
+  let shortDescription = "Get a device by its ID"
+
+  @Flag("-j", "--json", description: "Print the result in json format")
+  var json: Bool
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    let device = getDevice(deviceId: deviceId)
+
+    if json {
+      do {
+        print(try toJson(device))
+      } catch {
+        print("{}")
+      }
+      return
+    }
+
+    printDevice(device)
   }
 }
 
@@ -31,12 +104,27 @@ class OutputGroup: CommandGroup {
 
 class GetOutputCommand: Command {
   let name = "get"
-  
+
   @Flag("-j", "--json", description: "Print the result in json format")
   var json: Bool
 
   func execute() throws {
-    AudioDevices.getDefaultDevice(deviceType: .output, json: json)
+    do {
+      let device = try AudioDevices.getDefaultDevice(deviceType: .output)
+
+      if json {
+        do {
+          print(try toJson(device))
+        } catch {
+          print("{}")
+        }
+        return
+      }
+
+      printDevice(device)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -46,7 +134,16 @@ class SetOutputCommand: Command {
   @Param var deviceId: Int
 
   func execute() throws {
-    AudioDevices.setDefaultDevice(deviceType: .output, deviceId: deviceId)
+    let device = getDevice(deviceId: deviceId)
+
+    do {
+      try AudioDevices.setDefaultDevice(deviceType: .output, device: device)
+      print("Default output device was set to \(device.name)")
+    } catch AudioDevicesError.invalidDevice {
+      print("\(device.name) is not an output device", to: .standardError)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -63,7 +160,22 @@ class GetInputCommand: Command {
   var json: Bool
 
   func execute() throws {
-    AudioDevices.getDefaultDevice(deviceType: .input, json: json)
+    do {
+      let device = try AudioDevices.getDefaultDevice(deviceType: .input)
+
+      if json {
+        do {
+          print(try toJson(device))
+        } catch {
+          print("{}")
+        }
+        return
+      }
+
+      printDevice(device)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -73,7 +185,16 @@ class SetInputCommand: Command {
   @Param var deviceId: Int
 
   func execute() throws {
-    AudioDevices.setDefaultDevice(deviceType: .input, deviceId: deviceId)
+    let device = getDevice(deviceId: deviceId)
+
+    do {
+      try AudioDevices.setDefaultDevice(deviceType: .input, device: device)
+      print("Default input device was set to \(device.name)")
+    } catch AudioDevicesError.invalidDevice {
+      print("\(device.name) is not an input device", to: .standardError)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -85,12 +206,27 @@ class SystemGroup: CommandGroup {
 
 class GetSystemCommand: Command {
   let name = "get"
-  
+
   @Flag("-j", "--json", description: "Print the result in json format")
   var json: Bool
 
   func execute() throws {
-    AudioDevices.getDefaultDevice(deviceType: .system, json: json)
+    do {
+      let device = try AudioDevices.getDefaultDevice(deviceType: .system)
+
+      if json {
+        do {
+          print(try toJson(device))
+        } catch {
+          print("{}")
+        }
+        return
+      }
+
+      printDevice(device)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -100,7 +236,16 @@ class SetSystemCommand: Command {
   @Param var deviceId: Int
 
   func execute() throws {
-    AudioDevices.setDefaultDevice(deviceType: .system, deviceId: deviceId)
+    let device = getDevice(deviceId: deviceId)
+
+    do {
+      try AudioDevices.setDefaultDevice(deviceType: .system, device: device)
+      print("Default system sound device was set to \(device.name)")
+    } catch AudioDevicesError.invalidDevice {
+      print("\(device.name) is not an output device", to: .standardError)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -116,7 +261,12 @@ class GetVolumeCommand: Command {
   @Param var deviceId: Int
 
   func execute() throws {
-    AudioDevices.getDeviceVolume(deviceId: deviceId)
+    let device = getDevice(deviceId: deviceId)
+    if let volume = device.volume {
+      print(String(format: "%.2f", volume))
+    } else {
+      print("\(device.name) does not support volume", to: .standardError)
+    }
   }
 }
 
@@ -124,10 +274,20 @@ class SetVolumeCommand: Command {
   let name = "set"
 
   @Param var deviceId: Int
-  @Param var volume: Float
+  @Param var volume: Double
 
   func execute() throws {
-    AudioDevices.setDeviceVolume(deviceId: deviceId, volume: volume)
+    let device = getDevice(deviceId: deviceId)
+
+    do {
+      try device.setVolume(volume)
+    } catch AudioDevicesError.volumeNotSupported {
+      print("\(device.name) does not support volume", to: .standardError)
+    } catch AudioDevicesError.invalidVolumeValue {
+      print("Volume needs to be between 0 and 1", to: .standardError)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -152,7 +312,30 @@ class CreateAggregate: Command {
   @CollectedParam(minCount: 1) var deviceIds: [Int]
 
   func execute() throws {
-    AudioDevices.createAggregate(name: deviceName, mainId: mainDeviceId, otherIds: deviceIds, json: json, stack: stack)
+    let mainDevice = getDevice(deviceId: mainDeviceId)
+    let otherDevices = deviceIds.map { getDevice(deviceId: $0) }
+
+    do {
+      let aggregateDevice = try AudioDevices.createAggregate(
+        name: deviceName,
+        mainDevice: mainDevice,
+        otherDevices: otherDevices,
+        stack: stack
+      )
+
+      if json {
+        do {
+          print(try toJson(aggregateDevice))
+        } catch {
+          print("{}")
+        }
+        return
+      }
+
+      printDevice(aggregateDevice)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
@@ -163,10 +346,17 @@ class DestroyAggregate: Command {
   @Param var deviceId: Int
 
   func execute() throws {
-    AudioDevices.destroyAggregate(deviceId: deviceId)
+    let device = getDevice(deviceId: deviceId)
+
+    do {
+      try AudioDevices.destroyAggregate(device: device)
+      print("\(device.name) was destroyed")
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
   }
 }
 
 let audioDevices = CLI(name: "audio-devices")
-audioDevices.commands = [ListCommand(), OutputGroup(), InputGroup(), SystemGroup(), VolumeGroup(), AggregateGroup()]
+audioDevices.commands = [ListCommand(), GetCommand(), OutputGroup(), InputGroup(), SystemGroup(), VolumeGroup(), AggregateGroup()]
 _ = audioDevices.go()
