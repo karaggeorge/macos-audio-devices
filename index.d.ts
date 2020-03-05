@@ -1,386 +1,411 @@
-
 export interface Device {
+  /*
+  The unique ID of the device.
+  */
   id: number;
+
+  /**
+  The human readable name of the device.
+  */
   name: string;
+
+  /**
+  The UID of the device for the [`AVCaptureDevice`](https://developer.apple.com/documentation/avfoundation/avcapturedevice) API.
+  */
   uid: string;
+
+  /**
+  Whether the device is an output device.
+  */
   isOutput: boolean;
+
+  /**
+  Whether the device is an input device.
+  */
   isInput: boolean;
-  // If the volume is missing the device does not support it
+
+  /**
+  A number between 0 and 1 representing the volume setting of the device.
+
+  Only applicable on output devices that support it. It will be undefined otherwise.
+  */
   volume?: number;
 }
 
 export const getAllDevices: {
   /**
-  Get all the audio devices
+  Get all the audio devices.
+
+  @returns A promise that resolves with an array of devices.
 
   @example
   ```
   const devices = await getAllDevices();
   ```
-
-  @returns A promise that resolves with an array of devices
   */
   (): Promise<Device[]>;
 
   /**
-  Get all the audio devices
+  Get all the audio devices.
+
+  @returns An array of devices.
 
   @example
   ```
   const devices = getAllDevices.sync();
   ```
-
-  @returns An array of devices
   */
   sync: () => Device[];
 };
 
 export const getDevice: {
   /**
-  Get an audio device by id
+  Get an audio device by ID.
+
+  @returns A promise that resolves with the device.
 
   @example
   ```
   const device = await getDevice(73);
   ```
-
-  @returns A promise that resolves with the device
   */
   (): Promise<Device>;
 
   /**
-  Get an audio device by id
+  Get an audio device by ID.
+
+  @returns The device.
 
   @example
   ```
   const device = getDevice.sync(73);
   ```
-
-  @returns The device
   */
   sync: () => Device;
 };
 
 export const getOutputDevices: {
   /**
-  Get all the output devices
+  Get all the output devices.
+
+  @returns A promise that resolves with an array of output devices.
 
   @example
   ```
   const devices = await getOutputDevices();
   ```
-
-  @returns A promise that resolves with an array of output devices
   */
   (): Promise<Device[]>;
 
   /**
-  Get all the output devices
+  Get all the output devices.
+
+  @returns An array of output devices.
 
   @example
   ```
   const devices = getOutputDevices.sync();
   ```
-
-  @returns An array of output devices
   */
   sync: () => Device[];
 };
 
 export const getInputDevices: {
   /**
-  Get all the input devices
+  Get all the input devices.
+
+  @returns A promise that resolves with an array of input devices.
 
   @example
   ```
   const devices = await getInputDevices();
   ```
-
-  @returns A promise that resolves with an array of input devices
   */
   (): Promise<Device[]>;
 
   /**
-  Get all the input devices
+  Get all the input devices.
+
+  @returns An array of input devices.
 
   @example
   ```
   const devices = getInputDevices.sync();
   ```
-
-  @returns An array of input devices
   */
   sync: () => Device[];
 };
 
 export const getDefaultOutputDevice: {
   /**
-  Get the default output device
+  Get the default output device.
+
+  @returns A promise that resolves with the default output device.
 
   @example
   ```
-  const defaultOutputDevice = await getDefaultOutputDevice()
+  const defaultOutputDevice = await getDefaultOutputDevice();
   ```
-
-  @returns A promise that resolves with the default output device.
   */
   (): Promise<Device>;
 
   /**
-  Get the default output device
+  Get the default output device.
+
+  @returns The default output device.
 
   @example
   ```
-  const defaultOutputDevice = getDefaultOutputDevice.sync()
+  const defaultOutputDevice = getDefaultOutputDevice.sync();
   ```
-
-  @returns The default output device.
   */
   sync: () => Device;
 };
 
 export const getDefaultInputDevice: {
   /**
-  Get the default input device
+  Get the default input device.
+
+  @returns A promise that resolves with the default input device.
 
   @example
   ```
-  const defaultInputDevice = await getDefaultInputDevice()
+  const defaultInputDevice = await getDefaultInputDevice();
   ```
-
-  @returns A promise that resolves with the default input device.
   */
   (): Promise<Device>;
 
   /**
-  Get the default input device
+  Get the default input device.
+
+  @returns The default input device.
 
   @example
   ```
-  const defaultInputDevice = getDefaultInputDevice.sync()
+  const defaultInputDevice = getDefaultInputDevice.sync();
   ```
-
-  @returns The default input device.
   */
   sync: () => Device;
 };
 
 export const getDefaultSystemDevice: {
   /**
-  Get the default system sound effects device
+  Get the default system sound effects device.
+
+  @returns A promise that resolves with the default system device.
 
   @example
   ```
-  const defaultSystemDevice = await getDefaultSystemDevice()
+  const defaultSystemDevice = await getDefaultSystemDevice();
   ```
-
-  @returns A promise that resolves with the default system device.
   */
   (): Promise<Device>;
 
   /**
-  Get the default system sound effects device
+  Get the default system sound effects device.
+
+  @returns The default system device.
 
   @example
   ```
-  const defaultSystemDevice = getDefaultSystemDevice.sync()
+  const defaultSystemDevice = getDefaultSystemDevice.sync();
   ```
-
-  @returns The default system device.
   */
   sync: () => Device;
 }
 
 export const setDefaultOutputDevice: {
   /**
-  Set the default output device
+  Set the default output device.
+
+  @param deviceId - The ID of the output device to set as the default.
 
   @example
   ```
-  await setDefaultOutputDevice(74)
+  await setDefaultOutputDevice(74);
   ```
-
-  @param deviceId - The ID of the output device to set as the default
   */
   (deviceId: number): Promise<void>;
 
   /**
-  Set the default output device
+  Set the default output device.
+
+  @param deviceId - The ID of the output device to set as the default.
 
   @example
   ```
-  setDefaultOutputDevice.sync(74)
+  setDefaultOutputDevice.sync(74);
   ```
-
-  @param deviceId - The ID of the output device to set as the default
   */
   sync: (deviceId: number) => void;
 };
 
 export const setDefaultInputDevice: {
   /**
-  Set the default input device
+  Set the default input device.
+
+  @param deviceId - The ID of the input device to set as the default.
 
   @example
   ```
-  await setDefaultInputDevice(74)
+  await setDefaultInputDevice(74);
   ```
-
-  @param deviceId - The ID of the input device to set as the default
   */
   (deviceId: number): Promise<void>;
 
   /**
-  Set the default input device
+  Set the default input device.
+
+  @param deviceId - The ID of the input device to set as the default.
 
   @example
   ```
-  setDefaultInputDevice.sync(74)
+  setDefaultInputDevice.sync(74);
   ```
-
-  @param deviceId - The ID of the input device to set as the default
   */
   sync: (deviceId: number) => void;
 };
 
 export const setDefaultSystemDevice: {
   /**
-  Set the default system sound effects device (only output devices)
+  Set the default system sound effects device (only output devices).
+
+  @param deviceId - The ID of the output device to set as the default for system sounds.
 
   @example
   ```
-  await setDefaultSystemDevice(74)
+  await setDefaultSystemDevice(74);
   ```
-
-  @param deviceId - The ID of the output device to set as the default for system sounds
   */
   (deviceId: number): Promise<void>;
 
   /**
-  Set the default system sound effects device (only output devices)
+  Set the default system sound effects device (only output devices).
+
+  @param deviceId - The ID of the output device to set as the default for system sounds.
 
   @example
   ```
-  setDefaultSystemDevice.sync(74)
+  setDefaultSystemDevice.sync(74);
   ```
-
-  @param deviceId - The ID of the output device to set as the default for system sounds
   */
   sync: (deviceId: number) => void;
 };
 
 export const getOutputDeviceVolume: {
   /**
-  Get the volume of an output device that supports it
+  Get the volume of an output device that supports it.
+
+  @param deviceId - The ID of the output device.
+  @returns A promise that resolves with the volume of the device.
 
   @example
   ```
-  const volume = await getOutputDeviceVolume(74)
+  const volume = await getOutputDeviceVolume(74);
   ```
-
-  @param deviceId - The ID of the output device
-  @returns A promise that resolves with the volume of the device
   */
   (deviceId: number): Promise<number>;
 
   /**
-  Get the volume of an output device that supports it
+  Get the volume of an output device that supports it.
+
+  @param deviceId - The ID of the output device.
+  @returns The volume of the device.
 
   @example
   ```
-  const volume = getOutputDeviceVolume.sync(74)
+  const volume = getOutputDeviceVolume.sync(74);
   ```
-
-  @param deviceId - The ID of the output device
-  @returns The volume of the device
   */
   sync: (deviceId: number) => number;
 };
 
 export const setOutputDeviceVolume: {
   /**
-  Set the volume of an output device that supports it
+  Set the volume of an output device that supports it.
+
+  @param deviceId - The ID of the output device.
+  @param voluem - The volume level between 0 and 1.
 
   @example
   ```
-  await setOutputDeviceVolume(74, 0.5)
+  await setOutputDeviceVolume(74, 0.5);
   ```
-
-  @param deviceId - The ID of the output device
-  @param voluem - The voume level between 0 and 1
   */
   (deviceId: number, volume: number): Promise<void>;
 
   /**
-  Set the volume of an output device that supports it
+  Set the volume of an output device that supports it.
+
+  @param deviceId - The ID of the output device.
+  @param voluem - The volume level between 0 and 1.
 
   @example
   ```
-  setOutputDeviceVolume.sync(74, 0.5)
+  setOutputDeviceVolume.sync(74, 0.5);
   ```
-
-  @param deviceId - The ID of the output device
-  @param voluem - The voume level between 0 and 1
   */
   sync: (deviceId: number, volume: number) => void;
 };
 
 export const createAggregateDevice: {
   /**
-  Create an aggregate device from other existing devices.
+  Create an [aggregate device](https://support.apple.com/en-us/HT202000) from other existing devices.
+
+  Note that aggregate devices do not support volume, so make sure to update the volume on the devices used to create it instead.
+
+  @param name - The name of the aggregate device.
+  @param mainDeviceId - The ID of main device.
+  @param otherDeviceIds - Array of the rest of the device IDs to combine.
+  @param options.multiOutput - Wether to create the device as a “Multi-Output Device”.
+  @returns A promise that resolves with the newly created aggregate device.
 
   @example
   ```
   const aggregateDevice = await createAggregateDevice("My Aggregate Device", 74, [81, 86], {multiOutput: true});
   ```
-
-  @param name - The name of the aggregate device
-  @param mainDeviceId - The id of main device
-  @param otherDeviceIds - Array of the rest of the device ids to combine
-  @param options.multiOutput - Wether to create the device as a Multi-Output Device
-  @returns A promise that resolves with the newly created aggregate device
   */
   (name: string, mainDeviceId: number, otherDeviceIds: number[], options?: { multiOutput: boolean }): Promise<Device>;
 
   /**
   Create an aggregate device from other existing devices.
 
+  @param name - The name of the aggregate device.
+  @param mainDeviceId - The ID of main device.
+  @param otherDeviceIds - Array of the rest of the device IDs to combine.
+  @param options.multiOutput - Wether to create the device as a “Multi-Output Device”.
+  @returns The newly created aggregate device.
+
   @example
   ```
   const aggregateDevice = createAggregateDevice.sync("My Aggregate Device", 74, [81, 86], {multiOutput: true});
   ```
-
-  @param name - The name of the aggregate device
-  @param mainDeviceId - The id of main device
-  @param otherDeviceIds - Array of the rest of the device ids to combine
-  @param options.multiOutput - Wether to create the device as a Multi-Output Device
-  @returns The newly created aggregate device
   */
   sync: (name: string, mainDeviceId: number, otherDeviceIds: number[], options?: { multiOutput: boolean }) => Device;
 };
 
 export const destroyAggregateDevice: {
   /**
-  Destroy an aggregate device
+  Destroy an aggregate device.
+
+  @param deviceId - The ID of the output device.
 
   @example
   ```
-  await destroyAggregateDevice(74)
+  await destroyAggregateDevice(74);
   ```
-
-  @param deviceId - The ID of the output device
   */
   (deviceId: number): Promise<void>;
 
   /**
-  Destroy an aggregate device
+  Destroy an aggregate device.
+
+  @param deviceId - The ID of the output device.
 
   @example
   ```
-  destroyAggregateDevice.sync(74)
+  destroyAggregateDevice.sync(74);
   ```
-
-  @param deviceId - The ID of the output device
   */
   sync: (deviceId: number) => void;
 };
