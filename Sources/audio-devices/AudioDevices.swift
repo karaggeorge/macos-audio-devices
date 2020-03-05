@@ -30,7 +30,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
     uid = deviceUID as String
 
-    let inputChannels: UInt32 = CoreAudioData.getAudioDataSize(
+    let inputChannels: UInt32 = try CoreAudioData.getAudioDataSize(
       id: deviceId,
       selector: kAudioDevicePropertyStreams,
       scope: kAudioDevicePropertyScopeInput
@@ -38,7 +38,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
     isInput = inputChannels > 0
 
-    let outputChannels: UInt32 = CoreAudioData.getAudioDataSize(
+    let outputChannels: UInt32 = try CoreAudioData.getAudioDataSize(
       id: deviceId,
       selector: kAudioDevicePropertyStreams,
       scope: kAudioDevicePropertyScopeOutput
@@ -117,22 +117,22 @@ struct AudioDeviceType {
 
 class AudioDevices {
   static var all: [AudioDevice] {
-    let devicesSize = CoreAudioData.getAudioDataSize(selector: kAudioHardwarePropertyDevices)
-    let devicesLength = devicesSize / UInt32(MemoryLayout<AudioDeviceID>.size)
-
-    var deviceIds: [AudioDeviceID] = Array(repeating: 0, count: Int(devicesLength))
-
     do {
+      let devicesSize = try CoreAudioData.getAudioDataSize(selector: kAudioHardwarePropertyDevices)
+      let devicesLength = devicesSize / UInt32(MemoryLayout<AudioDeviceID>.size)
+
+      var deviceIds: [AudioDeviceID] = Array(repeating: 0, count: Int(devicesLength))
+
       try CoreAudioData.getAudioData(
         selector: kAudioHardwarePropertyDevices,
         initialSize: devicesSize,
         value: &deviceIds
       )
+
+      return deviceIds.compactMap { try? AudioDevice(withId: $0) }
     } catch {
       return []
     }
-
-    return deviceIds.compactMap { try? AudioDevice(withId: $0) }
   }
 
   static var input: [AudioDevice] {
@@ -298,7 +298,7 @@ struct CoreAudioData {
     selector: AudioObjectPropertySelector,
     scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal,
     element: AudioObjectPropertyElement = kAudioObjectPropertyElementMaster
-  ) -> UInt32 {
+  ) throws -> UInt32 {
     var size: UInt32 = 0
 
     var address = AudioObjectPropertyAddress(
@@ -310,7 +310,7 @@ struct CoreAudioData {
     let result = AudioObjectGetPropertyDataSize(id, &address, 0, nil, &size)
 
     guard result == 0 else {
-      return 0
+      throw NSError(domain: NSOSStatusErrorDomain, code: Int(result), userInfo: nil)
     }
 
     return size
