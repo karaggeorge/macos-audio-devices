@@ -11,8 +11,8 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
   init(withId deviceId: AudioDeviceID) throws {
     id = deviceId
-    var deviceName: CFString = "" as CFString
-    var deviceUID: CFString = "" as CFString
+    var deviceName = "" as CFString
+    var deviceUID = "" as CFString
 
     do {
       try CoreAudioData.getAudioData(id: deviceId, selector: kAudioObjectPropertyName, value: &deviceName)
@@ -73,11 +73,11 @@ struct AudioDevice: Hashable, Codable, Identifiable {
   }
 
   mutating func setVolume(_ newVolume: Double) throws {
-    if volume == nil {
+    guard volume != nil else {
       throw AudioDevices.Error.volumeNotSupported
     }
 
-    guard newVolume >= 0 && newVolume <= 1 else {
+    guard (0...1).contains(newVolume) else {
       throw AudioDevices.Error.invalidVolumeValue
     }
 
@@ -103,11 +103,13 @@ struct AudioDeviceType {
     isInput: true,
     isOutput: false
   )
+
   static let output = AudioDeviceType(
     selector: kAudioHardwarePropertyDefaultOutputDevice,
     isInput: false,
     isOutput: true
   )
+
   static let system = AudioDeviceType(
     selector: kAudioHardwarePropertyDefaultSystemOutputDevice,
     isInput: false,
@@ -115,7 +117,14 @@ struct AudioDeviceType {
   )
 }
 
-class AudioDevices {
+struct AudioDevices {
+  enum Error: Swift.Error {
+    case invalidDeviceId
+    case invalidDevice
+    case volumeNotSupported
+    case invalidVolumeValue
+  }
+
   static var all: [AudioDevice] {
     do {
       let devicesSize = try CoreAudioData.getAudioDataSize(selector: kAudioHardwarePropertyDevices)
@@ -136,11 +145,11 @@ class AudioDevices {
   }
 
   static var input: [AudioDevice] {
-    return all.filter { $0.isInput }
+    all.filter { $0.isInput }
   }
 
   static var output: [AudioDevice] {
-    return all.filter { $0.isOutput }
+    all.filter { $0.isOutput }
   }
 
   static func getDefaultDevice(for deviceType: AudioDeviceType) throws -> AudioDevice {
@@ -159,7 +168,7 @@ class AudioDevices {
       throw Error.invalidDevice
     }
 
-    var deviceId: AudioDeviceID = device.id
+    var deviceId = device.id
 
     try CoreAudioData.setAudioData(
       selector: deviceType.selector,
@@ -178,10 +187,10 @@ class AudioDevices {
   ///       shouldStack: true
   ///     )
   ///
-  /// - Parameter name: The name for the device to be created
-  /// - Parameter mainDevice: The main device
-  /// - Parameter otherDevices: The rest of the devices to be combined with the main one
-  /// - Parameter shouldStack: Whether or not it should create a Multi-Output Device
+  /// - Parameter name: The name for the device to be created.
+  /// - Parameter mainDevice: The main device.
+  /// - Parameter otherDevices: The rest of the devices to be combined with the main one.
+  /// - Parameter shouldStack: Whether or not it should create a Multi-Output Device.
   ///
   /// - Returns: The newly created device.
   static func createAggregate(
@@ -192,8 +201,9 @@ class AudioDevices {
     shouldStack: Bool = false
   ) throws -> AudioDevice {
     let allDevices = [mainDevice] + otherDevices
+
     let deviceList = allDevices.map {
-      return [
+      [
         kAudioSubDeviceUIDKey: $0.uid,
         kAudioSubDeviceDriftCompensationKey: $0.id == mainDevice.id ? 0 : 1
       ]
@@ -209,28 +219,17 @@ class AudioDevices {
 
     var aggregateDeviceId: AudioDeviceID = 0
 
-    let result = AudioHardwareCreateAggregateDevice(description as CFDictionary, &aggregateDeviceId)
-    guard result == 0 else {
-      throw NSError(domain: NSOSStatusErrorDomain, code: Int(result), userInfo: nil)
+    try NSError.checkOSStatus {
+      AudioHardwareCreateAggregateDevice(description as CFDictionary, &aggregateDeviceId)
     }
 
     return try AudioDevice(withId: aggregateDeviceId)
   }
 
   static func destroyAggregate(device: AudioDevice) throws {
-    let result = AudioHardwareDestroyAggregateDevice(device.id)
-
-    guard result == 0 else {
-      throw NSError(domain: NSOSStatusErrorDomain, code: Int(result), userInfo: nil)
+    try NSError.checkOSStatus {
+      AudioHardwareDestroyAggregateDevice(device.id)
     }
-  }
-
-  enum Error: Swift.Error {
-    case invalidDeviceId
-    case unknownError
-    case invalidDevice
-    case volumeNotSupported
-    case invalidVolumeValue
   }
 }
 
@@ -250,10 +249,8 @@ struct CoreAudioData {
       mElement: element
     )
 
-    let result = AudioObjectGetPropertyData(id, &address, 0, nil, &size, value)
-
-    if result != 0 {
-      throw NSError(domain: NSOSStatusErrorDomain, code: Int(result), userInfo: nil)
+    try NSError.checkOSStatus {
+      AudioObjectGetPropertyData(id, &address, 0, nil, &size, value)
     }
   }
 
@@ -271,10 +268,8 @@ struct CoreAudioData {
       mElement: element
     )
 
-    let result = AudioObjectSetPropertyData(id, &address, 0, nil, size, value)
-
-    if result != 0 {
-      throw NSError(domain: NSOSStatusErrorDomain, code: Int(result), userInfo: nil)
+    try NSError.checkOSStatus {
+      AudioObjectSetPropertyData(id, &address, 0, nil, size, value)
     }
   }
 
@@ -307,10 +302,8 @@ struct CoreAudioData {
       mElement: element
     )
 
-    let result = AudioObjectGetPropertyDataSize(id, &address, 0, nil, &size)
-
-    guard result == 0 else {
-      throw NSError(domain: NSOSStatusErrorDomain, code: Int(result), userInfo: nil)
+    try NSError.checkOSStatus {
+      AudioObjectGetPropertyDataSize(id, &address, 0, nil, &size)
     }
 
     return size
