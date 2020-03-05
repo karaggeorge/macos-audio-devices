@@ -5,38 +5,34 @@ func printDevice(_ device: AudioDevice) {
   print("\(device.id) - \(device.name)")
 }
 
-func getDevice(deviceId: Int) -> AudioDevice {
+func getDevice(deviceId: Int) throws -> AudioDevice {
   do {
-    let device = try AudioDevice(withId: UInt32(deviceId))
-    return device
-  } catch AudioDevices.Error.invalidDeviceId {
+    return try AudioDevice(withId: UInt32(deviceId))
+  } catch AudioDevice.Error.invalidDeviceId {
     print("No device exists with id \(deviceId)", to: .standardError)
     exit(1)
   } catch {
-    print("Something went wrong \(error)", to: .standardError)
-    exit(1)
+    throw error
   }
 }
 
-class ListCommand: Command {
+final class ListCommand: Command {
   let name = "list"
   let shortDescription = "List the available audio devices"
 
-  @Flag("-i", "--input", description: "Only list input devices")
+  @Flag("--input", description: "Only list input devices")
   var inputOnly: Bool
 
-  @Flag("-o", "--output", description: "Only list output devices")
+  @Flag("--output", description: "Only list output devices")
   var outputOnly: Bool
 
-  @Flag("-j", "--json", description: "Print the result in json format")
+  @Flag("--json", description: "Print the result in JSON format")
   var json: Bool
 
-  var optionGroups: [OptionGroup] {
-    return [.atMostOne($inputOnly, $outputOnly)]
-  }
+  var optionGroups: [OptionGroup] { [.atMostOne($inputOnly, $outputOnly)] }
 
   func execute() throws {
-    var devices = AudioDevices.all
+    var devices = AudioDevice.all
 
     if inputOnly {
       devices = devices.filter { $0.isInput }
@@ -52,6 +48,7 @@ class ListCommand: Command {
       } catch {
         print("[]")
       }
+
       return
     }
 
@@ -71,17 +68,94 @@ class ListCommand: Command {
   }
 }
 
-class GetCommand: Command {
+final class GetCommand: Command {
   let name = "get"
   let shortDescription = "Get a device by its ID"
 
-  @Flag("-j", "--json", description: "Print the result in json format")
+  @Flag("--json", description: "Print the result in JSON format")
   var json: Bool
 
   @Param var deviceId: Int
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
+
+    if json {
+      do {
+        print(try toJson(device))
+      } catch {
+        print("{}")
+      }
+
+      return
+    }
+
+    printDevice(device)
+  }
+}
+
+final class OutputGroup: CommandGroup {
+  let shortDescription = "Get or set the default output device"
+  let name = "output"
+  let children = [GetOutputCommand(), SetOutputCommand()] as [Routable]
+}
+
+final class GetOutputCommand: Command {
+  let name = "get"
+
+  @Flag("--json", description: "Print the result in JSON format")
+  var json: Bool
+
+  func execute() throws {
+    let device = try AudioDevice.getDefaultDevice(for: .output)
+
+    if json {
+      do {
+        print(try toJson(device))
+      } catch {
+        print("{}")
+      }
+
+      return
+    }
+
+    printDevice(device)
+  }
+}
+
+final class SetOutputCommand: Command {
+  let name = "set"
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    let device = try getDevice(deviceId: deviceId)
+
+    do {
+      try AudioDevice.setDefaultDevice(for: .output, device: device)
+      print("Default output device was set to \(device.name)")
+    } catch AudioDevice.Error.invalidDevice {
+      print("\(device.name) is not an output device", to: .standardError)
+    } catch {
+      throw error
+    }
+  }
+}
+
+final class InputGroup: CommandGroup {
+  let shortDescription = "Get or set the default input device"
+  let name = "input"
+  let children = [GetInputCommand(), SetInputCommand()] as [Routable]
+}
+
+final class GetInputCommand: Command {
+  let name = "get"
+
+  @Flag("--json", description: "Print the result in JSON format")
+  var json: Bool
+
+  func execute() throws {
+    let device = try AudioDevice.getDefaultDevice(for: .input)
 
     if json {
       do {
@@ -96,172 +170,86 @@ class GetCommand: Command {
   }
 }
 
-class OutputGroup: CommandGroup {
-  let shortDescription = "Get or set the default output device"
-  let name = "output"
-  let children = [GetOutputCommand(), SetOutputCommand()] as [Routable]
-}
-
-class GetOutputCommand: Command {
-  let name = "get"
-
-  @Flag("-j", "--json", description: "Print the result in json format")
-  var json: Bool
-
-  func execute() throws {
-    do {
-      let device = try AudioDevices.getDefaultDevice(for: .output)
-
-      if json {
-        do {
-          print(try toJson(device))
-        } catch {
-          print("{}")
-        }
-        return
-      }
-
-      printDevice(device)
-    } catch {
-      print("Something went wrong \(error)", to: .standardError)
-    }
-  }
-}
-
-class SetOutputCommand: Command {
+final class SetInputCommand: Command {
   let name = "set"
 
   @Param var deviceId: Int
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
+  let device = try getDevice(deviceId: deviceId)
 
     do {
-      try AudioDevices.setDefaultDevice(for: .output, device: device)
-      print("Default output device was set to \(device.name)")
-    } catch AudioDevices.Error.invalidDevice {
-      print("\(device.name) is not an output device", to: .standardError)
-    } catch {
-      print("Something went wrong \(error)", to: .standardError)
-    }
-  }
-}
-
-class InputGroup: CommandGroup {
-  let shortDescription = "Get or set the default input device"
-  let name = "input"
-  let children = [GetInputCommand(), SetInputCommand()] as [Routable]
-}
-
-class GetInputCommand: Command {
-  let name = "get"
-
-  @Flag("-j", "--json", description: "Print the result in json format")
-  var json: Bool
-
-  func execute() throws {
-    do {
-      let device = try AudioDevices.getDefaultDevice(for: .input)
-
-      if json {
-        do {
-          print(try toJson(device))
-        } catch {
-          print("{}")
-        }
-        return
-      }
-
-      printDevice(device)
-    } catch {
-      print("Something went wrong \(error)", to: .standardError)
-    }
-  }
-}
-
-class SetInputCommand: Command {
-  let name = "set"
-
-  @Param var deviceId: Int
-
-  func execute() throws {
-    let device = getDevice(deviceId: deviceId)
-
-    do {
-      try AudioDevices.setDefaultDevice(for: .input, device: device)
+      try AudioDevice.setDefaultDevice(for: .input, device: device)
       print("Default input device was set to \(device.name)")
-    } catch AudioDevices.Error.invalidDevice {
+    } catch AudioDevice.Error.invalidDevice {
       print("\(device.name) is not an input device", to: .standardError)
     } catch {
-      print("Something went wrong \(error)", to: .standardError)
+      throw error
     }
   }
 }
 
-class SystemGroup: CommandGroup {
+final class SystemGroup: CommandGroup {
   let shortDescription = "Get or set the default device for system sounds"
   let name = "system"
   let children = [GetSystemCommand(), SetSystemCommand()] as [Routable]
 }
 
-class GetSystemCommand: Command {
+final class GetSystemCommand: Command {
   let name = "get"
 
-  @Flag("-j", "--json", description: "Print the result in json format")
+  @Flag("--json", description: "Print the result in json format")
   var json: Bool
 
   func execute() throws {
-    do {
-      let device = try AudioDevices.getDefaultDevice(for: .system)
+    let device = try AudioDevice.getDefaultDevice(for: .system)
 
-      if json {
-        do {
-          print(try toJson(device))
-        } catch {
-          print("{}")
-        }
-        return
+    if json {
+      do {
+        print(try toJson(device))
+      } catch {
+        print("{}")
       }
 
-      printDevice(device)
-    } catch {
-      print("Something went wrong \(error)", to: .standardError)
+      return
     }
+
+    printDevice(device)
   }
 }
 
-class SetSystemCommand: Command {
+final class SetSystemCommand: Command {
   let name = "set"
 
   @Param var deviceId: Int
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
 
     do {
-      try AudioDevices.setDefaultDevice(for: .system, device: device)
+      try AudioDevice.setDefaultDevice(for: .system, device: device)
       print("Default system sound device was set to \(device.name)")
-    } catch AudioDevices.Error.invalidDevice {
+    } catch AudioDevice.Error.invalidDevice {
       print("\(device.name) is not an output device", to: .standardError)
     } catch {
-      print("Something went wrong \(error)", to: .standardError)
+      throw error
     }
   }
 }
 
-class VolumeGroup: CommandGroup {
+final class VolumeGroup: CommandGroup {
   let shortDescription = "Get or set the volume of an output device"
   let name = "volume"
   let children = [GetVolumeCommand(), SetVolumeCommand()] as [Routable]
 }
 
-class GetVolumeCommand: Command {
+final class GetVolumeCommand: Command {
   let name = "get"
 
   @Param var deviceId: Int
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
+  let device = try getDevice(deviceId: deviceId)
     if let volume = device.volume {
       print(String(format: "%.2f", volume))
     } else {
@@ -270,90 +258,82 @@ class GetVolumeCommand: Command {
   }
 }
 
-class SetVolumeCommand: Command {
+final class SetVolumeCommand: Command {
   let name = "set"
 
   @Param var deviceId: Int
   @Param var volume: Double
 
   func execute() throws {
-    var device = getDevice(deviceId: deviceId)
+    var device = try getDevice(deviceId: deviceId)
 
     do {
       try device.setVolume(volume)
-    } catch AudioDevices.Error.volumeNotSupported {
+    } catch AudioDevice.Error.volumeNotSupported {
       print("\(device.name) does not support volume", to: .standardError)
-    } catch AudioDevices.Error.invalidVolumeValue {
+    } catch AudioDevice.Error.invalidVolumeValue {
       print("Volume needs to be between 0 and 1", to: .standardError)
     } catch {
-      print("Something went wrong \(error)", to: .standardError)
+      throw error
     }
   }
 }
 
-class AggregateGroup: CommandGroup {
+final class AggregateGroup: CommandGroup {
   let shortDescription = "Create or delete aggregate audio devices"
   let name = "aggregate"
   let children = [CreateAggregate(), DestroyAggregate()] as [Routable]
 }
 
-class CreateAggregate: Command {
+final class CreateAggregate: Command {
   let name = "create"
   let shortDescription = "Create an aggregate device using existing devices"
 
-  @Flag("-j", "--json", description: "Print the result in json format")
+  @Flag("--json", description: "Print the result in JSON format")
   var json: Bool
 
-  @Flag("-m", "--multi-output", description: "Create the aggregate device as a Multi-Output Device")
-  var stack: Bool
+  @Flag("--multi-output", description: "Create the aggregate device as a Multi-Output Device")
+  var shouldStack: Bool
 
   @Param var deviceName: String
   @Param var mainDeviceId: Int
   @CollectedParam(minCount: 1) var deviceIds: [Int]
 
   func execute() throws {
-    let mainDevice = getDevice(deviceId: mainDeviceId)
-    let otherDevices = deviceIds.map { getDevice(deviceId: $0) }
+    let mainDevice = try getDevice(deviceId: mainDeviceId)
+    let otherDevices = try deviceIds.map { try getDevice(deviceId: $0) }
 
-    do {
-      let aggregateDevice = try AudioDevices.createAggregate(
-        name: deviceName,
-        mainDevice: mainDevice,
-        otherDevices: otherDevices,
-        shouldStack: stack
-      )
+    let aggregateDevice = try AudioDevice.createAggregate(
+      name: deviceName,
+      mainDevice: mainDevice,
+      otherDevices: otherDevices,
+      shouldStack: shouldStack
+    )
 
-      if json {
-        do {
-          print(try toJson(aggregateDevice))
-        } catch {
-          print("{}")
-        }
-        return
+    if json {
+      do {
+        print(try toJson(aggregateDevice))
+      } catch {
+        print("{}")
       }
 
-      printDevice(aggregateDevice)
-    } catch {
-      print("Something went wrong \(error)", to: .standardError)
+      return
     }
+
+    printDevice(aggregateDevice)
   }
 }
 
-class DestroyAggregate: Command {
+final class DestroyAggregate: Command {
   let name = "destroy"
   let shortDescription = "Destory a created aggregate device"
 
   @Param var deviceId: Int
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
-
-    do {
-      try AudioDevices.destroyAggregate(device: device)
-      print("\(device.name) was destroyed")
-    } catch {
-      print("Something went wrong \(error)", to: .standardError)
-    }
+    let device = try getDevice(deviceId: deviceId)
+    try AudioDevice.destroyAggregate(device: device)
+    print("\(device.name) was destroyed")
   }
 }
 

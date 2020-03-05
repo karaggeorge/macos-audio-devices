@@ -2,6 +2,13 @@ import Cocoa
 import CoreAudio
 
 struct AudioDevice: Hashable, Codable, Identifiable {
+  enum Error: Swift.Error {
+    case invalidDeviceId
+    case invalidDevice
+    case volumeNotSupported
+    case invalidVolumeValue
+  }
+
   let id: AudioDeviceID
   let name: String
   let uid: String
@@ -15,22 +22,22 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     var deviceUID = "" as CFString
 
     do {
-      try CoreAudioData.getAudioData(id: deviceId, selector: kAudioObjectPropertyName, value: &deviceName)
+      try CoreAudioData.get(id: deviceId, selector: kAudioObjectPropertyName, value: &deviceName)
     } catch {
-      throw AudioDevices.Error.invalidDeviceId
+      throw Error.invalidDeviceId
     }
 
     name = deviceName as String
 
     do {
-      try CoreAudioData.getAudioData(id: deviceId, selector: kAudioDevicePropertyDeviceUID, value: &deviceUID)
+      try CoreAudioData.get(id: deviceId, selector: kAudioDevicePropertyDeviceUID, value: &deviceUID)
     } catch {
-      throw AudioDevices.Error.invalidDeviceId
+      throw Error.invalidDeviceId
     }
 
     uid = deviceUID as String
 
-    let inputChannels: UInt32 = try CoreAudioData.getAudioDataSize(
+    let inputChannels: UInt32 = try CoreAudioData.size(
       id: deviceId,
       selector: kAudioDevicePropertyStreams,
       scope: kAudioDevicePropertyScopeInput
@@ -38,7 +45,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
     isInput = inputChannels > 0
 
-    let outputChannels: UInt32 = try CoreAudioData.getAudioDataSize(
+    let outputChannels: UInt32 = try CoreAudioData.size(
       id: deviceId,
       selector: kAudioDevicePropertyStreams,
       scope: kAudioDevicePropertyScopeOutput
@@ -46,7 +53,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
     isOutput = outputChannels > 0
 
-    let hasVolume = CoreAudioData.hasAudioData(
+    let hasVolume = CoreAudioData.has(
       id: deviceId,
       selector: kAudioDevicePropertyVolumeScalar,
       scope: kAudioDevicePropertyScopeOutput
@@ -56,7 +63,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
       var deviceVolume: Float32 = 0.0
 
       do {
-        try CoreAudioData.getAudioData(
+        try CoreAudioData.get(
           id: deviceId,
           selector: kAudioDevicePropertyVolumeScalar,
           scope: kAudioDevicePropertyScopeOutput,
@@ -74,15 +81,15 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
   mutating func setVolume(_ newVolume: Double) throws {
     guard volume != nil else {
-      throw AudioDevices.Error.volumeNotSupported
+      throw Error.volumeNotSupported
     }
 
     guard (0...1).contains(newVolume) else {
-      throw AudioDevices.Error.invalidVolumeValue
+      throw Error.invalidVolumeValue
     }
 
     var value = Float32(newVolume)
-    try CoreAudioData.setAudioData(
+    try CoreAudioData.set(
       id: id,
       selector: kAudioDevicePropertyVolumeScalar,
       scope: kAudioDevicePropertyScopeOutput,
@@ -117,60 +124,53 @@ struct AudioDeviceType {
   )
 }
 
-struct AudioDevices {
-  enum Error: Swift.Error {
-    case invalidDeviceId
-    case invalidDevice
-    case volumeNotSupported
-    case invalidVolumeValue
-  }
-
-  static var all: [AudioDevice] {
+extension AudioDevice {
+  static var all: [Self] {
     do {
-      let devicesSize = try CoreAudioData.getAudioDataSize(selector: kAudioHardwarePropertyDevices)
+      let devicesSize = try CoreAudioData.size(selector: kAudioHardwarePropertyDevices)
       let devicesLength = devicesSize / UInt32(MemoryLayout<AudioDeviceID>.size)
 
       var deviceIds: [AudioDeviceID] = Array(repeating: 0, count: Int(devicesLength))
 
-      try CoreAudioData.getAudioData(
+      try CoreAudioData.get(
         selector: kAudioHardwarePropertyDevices,
         initialSize: devicesSize,
         value: &deviceIds
       )
 
-      return deviceIds.compactMap { try? AudioDevice(withId: $0) }
+      return deviceIds.compactMap { try? self.init(withId: $0) }
     } catch {
       return []
     }
   }
 
-  static var input: [AudioDevice] {
+  static var input: [Self] {
     all.filter { $0.isInput }
   }
 
-  static var output: [AudioDevice] {
+  static var output: [Self] {
     all.filter { $0.isOutput }
   }
 
-  static func getDefaultDevice(for deviceType: AudioDeviceType) throws -> AudioDevice {
+  static func getDefaultDevice(for deviceType: AudioDeviceType) throws -> Self {
     var deviceId: AudioDeviceID = 0
 
-    try CoreAudioData.getAudioData(
+    try CoreAudioData.get(
       selector: deviceType.selector,
       value: &deviceId
     )
 
-    return try AudioDevice(withId: deviceId)
+    return try self.init(withId: deviceId)
   }
 
-  static func setDefaultDevice(for deviceType: AudioDeviceType, device: AudioDevice) throws {
+  static func setDefaultDevice(for deviceType: AudioDeviceType, device: Self) throws {
     if (deviceType.isInput && !device.isInput) || (deviceType.isOutput && !device.isOutput) {
       throw Error.invalidDevice
     }
 
     var deviceId = device.id
 
-    try CoreAudioData.setAudioData(
+    try CoreAudioData.set(
       selector: deviceType.selector,
       value: &deviceId
     )
@@ -196,10 +196,10 @@ struct AudioDevices {
   static func createAggregate(
     name: String,
     uid: String = UUID().uuidString,
-    mainDevice: AudioDevice,
-    otherDevices: [AudioDevice],
+    mainDevice: Self,
+    otherDevices: [Self],
     shouldStack: Bool = false
-  ) throws -> AudioDevice {
+  ) throws -> Self {
     let allDevices = [mainDevice] + otherDevices
 
     let deviceList = allDevices.map {
@@ -223,10 +223,10 @@ struct AudioDevices {
       AudioHardwareCreateAggregateDevice(description as CFDictionary, &aggregateDeviceId)
     }
 
-    return try AudioDevice(withId: aggregateDeviceId)
+    return try self.init(withId: aggregateDeviceId)
   }
 
-  static func destroyAggregate(device: AudioDevice) throws {
+  static func destroyAggregate(device: Self) throws {
     try NSError.checkOSStatus {
       AudioHardwareDestroyAggregateDevice(device.id)
     }
@@ -234,7 +234,7 @@ struct AudioDevices {
 }
 
 struct CoreAudioData {
-  static func getAudioData<T>(
+  static func get<T>(
     id: UInt32 = AudioObjectID(kAudioObjectSystemObject),
     selector: AudioObjectPropertySelector,
     scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal,
@@ -254,7 +254,7 @@ struct CoreAudioData {
     }
   }
 
-  static func setAudioData<T>(
+  static func set<T>(
     id: UInt32 = AudioObjectID(kAudioObjectSystemObject),
     selector: AudioObjectPropertySelector,
     scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal,
@@ -273,7 +273,7 @@ struct CoreAudioData {
     }
   }
 
-  static func hasAudioData(
+  static func has(
     id: UInt32 = AudioObjectID(kAudioObjectSystemObject),
     selector: AudioObjectPropertySelector,
     scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal,
@@ -288,7 +288,7 @@ struct CoreAudioData {
     return AudioObjectHasProperty(id, &address)
   }
 
-  static func getAudioDataSize(
+  static func size(
     id: UInt32 = AudioObjectID(kAudioObjectSystemObject),
     selector: AudioObjectPropertySelector,
     scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal,
