@@ -55,7 +55,7 @@ generateExport('setOutputDeviceVolume', (deviceId, volume) => ['volume', 'set', 
 generateExport(
   'createAggregateDevice',
   (name, mainDeviceId, otherDeviceIds, {multiOutput} = {}) => [
-    'aggregate', 'create', '-json', (multiOutput && '--multi-output'), name, mainDeviceId, ...otherDeviceIds
+    'aggregate', 'create', '--json', (multiOutput && '--multi-output'), name, mainDeviceId, ...otherDeviceIds
   ].filter(Boolean),
   parseStdout
 );
