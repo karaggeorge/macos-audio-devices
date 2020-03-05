@@ -1,7 +1,7 @@
 # macos-audio-devices [![Actions Status](https://github.com/karaggeorge/macos-audio-devices/workflows/Node%20CI/badge.svg)](https://github.com/karaggeorge/macos-audio-devices/actions)
 
 
-> Get, set and configure the Audio Devices on macOS
+> Get, set and configure the audio devices on macOS
 
 Requires macOS 10.12 or later. macOS 10.13 or earlier needs to download the [Swift runtime support libraries](https://support.apple.com/kb/DL1998).
 
@@ -34,6 +34,7 @@ Groups:
 
 Commands:
   list            List the available audio devices
+  get             Get a device by its ID
   help            Prints help information
 ```
 
