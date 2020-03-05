@@ -358,5 +358,15 @@ class DestroyAggregate: Command {
 }
 
 let audioDevices = CLI(name: "audio-devices")
-audioDevices.commands = [ListCommand(), GetCommand(), OutputGroup(), InputGroup(), SystemGroup(), VolumeGroup(), AggregateGroup()]
+
+audioDevices.commands = [
+  ListCommand(),
+  GetCommand(),
+  OutputGroup(),
+  InputGroup(),
+  SystemGroup(),
+  VolumeGroup(),
+  AggregateGroup()
+]
+
 _ = audioDevices.go()

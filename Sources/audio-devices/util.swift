@@ -1,15 +1,18 @@
 import Foundation
 import Cocoa
 
+
 func toJson<T: Encodable>(_ data: T) throws -> String {
   let jsonData = try JSONEncoder().encode(data)
   return String(data: jsonData, encoding: .utf8)!
 }
 
+
 enum PrintOutputTarget {
   case standardOutput
   case standardError
 }
+
 
 extension FileHandle: TextOutputStream {
 	public func write(_ string: String) {
@@ -17,13 +20,15 @@ extension FileHandle: TextOutputStream {
 	}
 }
 
-struct Targets {
+
+struct CLITargets {
   static var standardInput = FileHandle.standardOutput
   static var standardOutput = FileHandle.standardOutput
   static var standardError = FileHandle.standardError
 }
 
-/// Make `print()` accept an array of items
+
+/// Make `print()` accept an array of items.
 /// Since Swift doesn't support spreading...
 private func print<Target>(
   _ items: [Any],
@@ -35,6 +40,7 @@ private func print<Target>(
   Swift.print(item, terminator: terminator, to: &output)
 }
 
+
 func print(
   _ items: Any...,
   separator: String = " ",
@@ -45,6 +51,23 @@ func print(
   case .standardOutput:
     print(items, separator: separator, terminator: terminator)
   case .standardError:
-    print(items, separator: separator, terminator: terminator, to: &Targets.standardError)
+    print(items, separator: separator, terminator: terminator, to: &CLITargets.standardError)
+  }
+}
+
+
+extension NSError {
+  /// Execute the given closure and throw an error if the status code is non-zero.
+  static func checkOSStatus(_ closure: () -> OSStatus) throws {
+    let result = closure()
+
+    guard result == 0 else {
+      throw NSError(osstatus: result)
+    }
+  }
+
+  /// Create an `NSError` from a `OSStatus`.
+  convenience init(osstatus: OSStatus) {
+	self.init(domain: NSOSStatusErrorDomain, code: Int(osstatus), userInfo: nil)
   }
 }
