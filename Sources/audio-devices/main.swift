@@ -9,7 +9,7 @@ func getDevice(deviceId: Int) -> AudioDevice {
   do {
     let device = try AudioDevice(withId: UInt32(deviceId))
     return device
-  } catch AudioDevicesError.invalidDeviceId {
+  } catch AudioDevices.Error.invalidDeviceId {
     print("No device exists with id \(deviceId)", to: .standardError)
     exit(1)
   } catch {
@@ -36,7 +36,7 @@ class ListCommand: Command {
   }
 
   func execute() throws {
-    var devices = AudioDevices.getAudioDevices()
+    var devices = AudioDevices.all
 
     if inputOnly {
       devices = devices.filter { $0.isInput }
@@ -110,7 +110,7 @@ class GetOutputCommand: Command {
 
   func execute() throws {
     do {
-      let device = try AudioDevices.getDefaultDevice(deviceType: .output)
+      let device = try AudioDevices.getDefaultDevice(for: .output)
 
       if json {
         do {
@@ -137,9 +137,9 @@ class SetOutputCommand: Command {
     let device = getDevice(deviceId: deviceId)
 
     do {
-      try AudioDevices.setDefaultDevice(deviceType: .output, device: device)
+      try AudioDevices.setDefaultDevice(for: .output, device: device)
       print("Default output device was set to \(device.name)")
-    } catch AudioDevicesError.invalidDevice {
+    } catch AudioDevices.Error.invalidDevice {
       print("\(device.name) is not an output device", to: .standardError)
     } catch {
       print("Something went wrong \(error)", to: .standardError)
@@ -161,7 +161,7 @@ class GetInputCommand: Command {
 
   func execute() throws {
     do {
-      let device = try AudioDevices.getDefaultDevice(deviceType: .input)
+      let device = try AudioDevices.getDefaultDevice(for: .input)
 
       if json {
         do {
@@ -188,9 +188,9 @@ class SetInputCommand: Command {
     let device = getDevice(deviceId: deviceId)
 
     do {
-      try AudioDevices.setDefaultDevice(deviceType: .input, device: device)
+      try AudioDevices.setDefaultDevice(for: .input, device: device)
       print("Default input device was set to \(device.name)")
-    } catch AudioDevicesError.invalidDevice {
+    } catch AudioDevices.Error.invalidDevice {
       print("\(device.name) is not an input device", to: .standardError)
     } catch {
       print("Something went wrong \(error)", to: .standardError)
@@ -212,7 +212,7 @@ class GetSystemCommand: Command {
 
   func execute() throws {
     do {
-      let device = try AudioDevices.getDefaultDevice(deviceType: .system)
+      let device = try AudioDevices.getDefaultDevice(for: .system)
 
       if json {
         do {
@@ -239,9 +239,9 @@ class SetSystemCommand: Command {
     let device = getDevice(deviceId: deviceId)
 
     do {
-      try AudioDevices.setDefaultDevice(deviceType: .system, device: device)
+      try AudioDevices.setDefaultDevice(for: .system, device: device)
       print("Default system sound device was set to \(device.name)")
-    } catch AudioDevicesError.invalidDevice {
+    } catch AudioDevices.Error.invalidDevice {
       print("\(device.name) is not an output device", to: .standardError)
     } catch {
       print("Something went wrong \(error)", to: .standardError)
@@ -277,13 +277,13 @@ class SetVolumeCommand: Command {
   @Param var volume: Double
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
+    var device = getDevice(deviceId: deviceId)
 
     do {
       try device.setVolume(volume)
-    } catch AudioDevicesError.volumeNotSupported {
+    } catch AudioDevices.Error.volumeNotSupported {
       print("\(device.name) does not support volume", to: .standardError)
-    } catch AudioDevicesError.invalidVolumeValue {
+    } catch AudioDevices.Error.invalidVolumeValue {
       print("Volume needs to be between 0 and 1", to: .standardError)
     } catch {
       print("Something went wrong \(error)", to: .standardError)
@@ -320,7 +320,7 @@ class CreateAggregate: Command {
         name: deviceName,
         mainDevice: mainDevice,
         otherDevices: otherDevices,
-        stack: stack
+        shouldStack: stack
       )
 
       if json {
