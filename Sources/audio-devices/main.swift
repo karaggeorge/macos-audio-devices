@@ -18,6 +18,7 @@ func getDevice(deviceId: Int) -> AudioDevice {
   }
 }
 
+
 class ListCommand: Command {
   let name = "list"
   let shortDescription = "List the available audio devices"
@@ -39,11 +40,11 @@ class ListCommand: Command {
     var devices = AudioDevices.all
 
     if inputOnly {
-      devices = devices.filter { $0.isInput }
+      devices = devices.filter { $0.hasInput }
     }
 
     if outputOnly {
-      devices = devices.filter { $0.isOutput }
+      devices = devices.filter { $0.hasOutput }
     }
 
     if json {
@@ -57,7 +58,7 @@ class ListCommand: Command {
 
     if !outputOnly {
       print("Input Devices\n")
-      devices.filter { $0.isInput }.forEach { printDevice($0) }
+      devices.filter { $0.hasInput }.forEach { printDevice($0) }
 
       if !inputOnly {
         print("\n")
@@ -66,7 +67,7 @@ class ListCommand: Command {
 
     if !inputOnly {
       print("Output Devices\n")
-      devices.filter { $0.isOutput }.forEach { printDevice($0) }
+      devices.filter { $0.hasOutput }.forEach { printDevice($0) }
     }
   }
 }
@@ -95,6 +96,7 @@ class GetCommand: Command {
     printDevice(device)
   }
 }
+
 
 class OutputGroup: CommandGroup {
   let shortDescription = "Get or set the default output device"
@@ -147,6 +149,7 @@ class SetOutputCommand: Command {
   }
 }
 
+
 class InputGroup: CommandGroup {
   let shortDescription = "Get or set the default input device"
   let name = "input"
@@ -197,6 +200,7 @@ class SetInputCommand: Command {
     }
   }
 }
+
 
 class SystemGroup: CommandGroup {
   let shortDescription = "Get or set the default device for system sounds"
@@ -249,8 +253,9 @@ class SetSystemCommand: Command {
   }
 }
 
+
 class VolumeGroup: CommandGroup {
-  let shortDescription = "Get or set the volume of an output device"
+  let shortDescription = "Get or set the volume for device"
   let name = "volume"
   let children = [GetVolumeCommand(), SetVolumeCommand()] as [Routable]
 }
@@ -262,7 +267,7 @@ class GetVolumeCommand: Command {
 
   func execute() throws {
     let device = getDevice(deviceId: deviceId)
-    if let volume = device.volume {
+    if let volume = device.getVolume() {
       print(String(format: "%.2f", volume))
     } else {
       print("\(device.name) does not support volume", to: .standardError)
@@ -290,6 +295,48 @@ class SetVolumeCommand: Command {
     }
   }
 }
+
+
+class MuteGroup: CommandGroup {
+  let shortDescription = "Mute or unmute device"
+  let name = "mute"
+  let children = [GetMuteCommand(), ToggleMuteCommand()] as [Routable]
+}
+
+class GetMuteCommand: Command {
+  let name = "get"
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    let device = getDevice(deviceId: deviceId)
+
+    if let isMuted = device.getMute() {
+      print(isMuted)
+    } else {
+      print("\(device.name) does not support muting", to: .standardError)
+    }
+  }
+}
+
+class ToggleMuteCommand: Command {
+  let name = "toggle"
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    var device = getDevice(deviceId: deviceId)
+    
+    do {
+      try device.toggleMute()
+    } catch AudioDevices.Error.muteNotSupported {
+      print("\(device.name) does not support muting", to: .standardError)
+    } catch {
+      print("Something went wrong \(error)", to: .standardError)
+    }
+  }
+}
+
 
 class AggregateGroup: CommandGroup {
   let shortDescription = "Create or delete aggregate audio devices"
@@ -366,6 +413,7 @@ audioDevices.commands = [
   InputGroup(),
   SystemGroup(),
   VolumeGroup(),
+  MuteGroup(),
   AggregateGroup()
 ]
 

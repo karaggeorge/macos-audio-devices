@@ -48,9 +48,13 @@ generateExport('setDefaultInputDevice', deviceId => ['input', 'set', deviceId], 
 
 generateExport('setDefaultSystemDevice', deviceId => ['system', 'set', deviceId], throwIfStderr);
 
-generateExport('getOutputDeviceVolume', deviceId => ['volume', 'get', deviceId], ({stdout, stderr}) => stderr ? undefined : stdout);
+generateExport('getDeviceVolume', deviceId => ['volume', 'get', deviceId], ({stdout, stderr}) => stderr ? undefined : stdout);
 
-generateExport('setOutputDeviceVolume', (deviceId, volume) => ['volume', 'set', deviceId, volume], throwIfStderr);
+generateExport('setDeviceVolume', (deviceId, volume) => ['volume', 'set', deviceId, volume], throwIfStderr);
+
+generateExport('getDeviceMute', deviceId => ['mute', 'get', deviceId], ({stdout, stderr}) => stderr ? undefined : stdout);
+
+generateExport('toggleDeviceMute', (deviceId, volume) => ['mute', 'toggle', deviceId], throwIfStderr);
 
 generateExport(
   'createAggregateDevice',

@@ -292,60 +292,114 @@ export const setDefaultSystemDevice: {
   sync: (deviceId: number) => void;
 };
 
-export const getOutputDeviceVolume: {
+export const getDeviceVolume: {
   /**
-  Get the volume of an output device that supports it.
+  Get the volume of an device that supports it.
 
-  @param deviceId - The ID of the output device.
+  @param deviceId - The ID of the device.
   @returns A promise that resolves with the volume of the device.
 
   @example
   ```
-  const volume = await getOutputDeviceVolume(74);
+  const volume = await getDeviceVolume(74);
   ```
   */
   (deviceId: number): Promise<number>;
 
   /**
-  Get the volume of an output device that supports it.
+  Get the volume of an device that supports it.
 
-  @param deviceId - The ID of the output device.
+  @param deviceId - The ID of the device.
   @returns The volume of the device.
 
   @example
   ```
-  const volume = getOutputDeviceVolume.sync(74);
+  const volume = getDeviceVolume.sync(74);
   ```
   */
   sync: (deviceId: number) => number;
 };
 
-export const setOutputDeviceVolume: {
+export const setDeviceVolume: {
   /**
-  Set the volume of an output device that supports it.
+  Set the volume of an device that supports it.
 
-  @param deviceId - The ID of the output device.
+  @param deviceId - The ID of the device.
   @param voluem - The volume level between 0 and 1.
 
   @example
   ```
-  await setOutputDeviceVolume(74, 0.5);
+  await setDeviceVolume(74, 0.5);
   ```
   */
   (deviceId: number, volume: number): Promise<void>;
 
   /**
-  Set the volume of an output device that supports it.
+  Set the volume of an device that supports it.
 
-  @param deviceId - The ID of the output device.
+  @param deviceId - The ID of the device.
   @param voluem - The volume level between 0 and 1.
 
   @example
   ```
-  setOutputDeviceVolume.sync(74, 0.5);
+  setDeviceVolume.sync(74, 0.5);
   ```
   */
   sync: (deviceId: number, volume: number) => void;
+};
+
+export const getDeviceMute: {
+  /**
+  Get the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @returns A promise that resolves with the mute state of the device.
+
+  @example
+  ```
+  const mute = await getDeviceMute(74);
+  ```
+  */
+  (deviceId: number): Promise<boolean>;
+
+  /**
+  Get the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @returns The mute state of the device.
+
+  @example
+  ```
+  const mute = getDeviceMute.sync(74);
+  ```
+  */
+  sync: (deviceId: number) => boolean;
+};
+
+export const toggleDeviceMute: {
+  /**
+  Toggle mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+
+  @example
+  ```
+  await toggleDeviceMute(74);
+  ```
+  */
+  (deviceId: number): Promise<void>;
+
+  /**
+  Toggle mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+
+  @example
+  ```
+  toggleDeviceMute.sync(74);
+  ```
+  */
+  sync: (deviceId: number) => void;
 };
 
 export const createAggregateDevice: {
