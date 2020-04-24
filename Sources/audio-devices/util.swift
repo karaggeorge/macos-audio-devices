@@ -59,15 +59,19 @@ func print(
 extension NSError {
   /// Execute the given closure and throw an error if the status code is non-zero.
   static func checkOSStatus(_ closure: () -> OSStatus) throws {
-    let result = closure()
-
-    guard result == 0 else {
-      throw NSError(osstatus: result)
+    guard let error = NSError(osstatus: closure()) else {
+      return
     }
+
+    throw error
   }
 
   /// Create an `NSError` from a `OSStatus`.
-  convenience init(osstatus: OSStatus) {
+  convenience init?(osstatus: OSStatus) {
+    guard osstatus != 0 else {
+      return nil
+    }
+
 	self.init(domain: NSOSStatusErrorDomain, code: Int(osstatus), userInfo: nil)
   }
 }
