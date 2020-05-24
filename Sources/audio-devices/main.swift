@@ -265,11 +265,11 @@ final class SetVolumeCommand: Command {
   @Param var volume: Double
 
   func execute() throws {
-    var device = try getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
 
     do {
       try device.setVolume(to: volume)
-    } catch AudioDevices.Error.volumeNotSupported {
+    } catch AudioDevice.Error.volumeNotSupported {
       print("\(device.name) does not support volume", to: .standardError)
     } catch AudioDevice.Error.invalidVolumeValue {
       print("Volume needs to be between 0 and 1", to: .standardError)
@@ -280,19 +280,19 @@ final class SetVolumeCommand: Command {
 }
 
 
-final MuteGroup: CommandGroup {
+final class MuteGroup: CommandGroup {
   let shortDescription = "Mute or unmute device"
   let name = "mute"
   let children = [GetMuteCommand(), ToggleMuteCommand()] as [Routable]
 }
 
-final GetMuteCommand: Command {
+final class GetMuteCommand: Command {
   let name = "get"
 
   @Param var deviceId: Int
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
 
     if let isMuted = device.isMuted {
       print(isMuted)
@@ -302,17 +302,17 @@ final GetMuteCommand: Command {
   }
 }
 
-final ToggleMuteCommand: Command {
+final class ToggleMuteCommand: Command {
   let name = "toggle"
 
   @Param var deviceId: Int
 
   func execute() throws {
-    let device = getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
     
     do {
       try device.toggleMute()
-    } catch AudioDevices.Error.muteNotSupported {
+    } catch AudioDevice.Error.muteNotSupported {
       print("\(device.name) does not support muting", to: .standardError)
     } catch {
       print("Something went wrong \(error)", to: .standardError)
@@ -321,7 +321,7 @@ final ToggleMuteCommand: Command {
 }
 
 
-final AggregateGroup: CommandGroup {
+final class AggregateGroup: CommandGroup {
   let shortDescription = "Create or delete aggregate audio devices"
   let name = "aggregate"
   let children = [CreateAggregate(), DestroyAggregate()] as [Routable]

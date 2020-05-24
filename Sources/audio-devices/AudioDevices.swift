@@ -7,6 +7,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     case invalidDeviceId
     case invalidDevice
     case volumeNotSupported
+    case muteNotSupported
     case invalidVolumeValue
   }
 
@@ -99,7 +100,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
   func setVolume(to newVolume: Double, for type: AudioDeviceType) throws {
     if (type.hasInput) {
       guard (0...1).contains(newVolume) else {
-        throw AudioDevices.Error.invalidVolumeValue
+        throw AudioDevice.Error.invalidVolumeValue
       }
       
       var value = Float32(newVolume)
@@ -112,7 +113,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     }
     if (type.hasOutput) {
       guard (0...1).contains(newVolume) else {
-        throw AudioDevices.Error.invalidVolumeValue
+        throw AudioDevice.Error.invalidVolumeValue
       }
       
       var value = Float32(newVolume)
@@ -182,7 +183,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
   func toggleMute(for type: AudioDeviceType) throws {
     if (type.hasInput) {
       guard let isInputMuted = self.isInputMuted else {
-        throw AudioDevices.Error.muteNotSupported
+        throw AudioDevice.Error.muteNotSupported
       }
       
       var newValue = NSNumber(booleanLiteral: !isInputMuted).uint32Value
@@ -197,7 +198,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
     if (type.hasOutput) {
       guard let isOutputMuted = self.isOutputMuted else {
-        throw AudioDevices.Error.muteNotSupported
+        throw AudioDevice.Error.muteNotSupported
       }
       
       var newValue = NSNumber(booleanLiteral: !isOutputMuted).uint32Value
@@ -267,11 +268,11 @@ extension AudioDevice {
   }
 
   static var input: [Self] {
-    all.filter { $0.isInput }
+    all.filter { $0.hasInput }
   }
 
   static var output: [Self] {
-    all.filter { $0.isOutput }
+    all.filter { $0.hasOutput }
   }
 
   static func getDefaultDevice(for deviceType: AudioDeviceType) throws -> Self {
@@ -286,7 +287,7 @@ extension AudioDevice {
   }
 
   static func setDefaultDevice(for deviceType: AudioDeviceType, device: Self) throws {
-    if (deviceType.isInput && !device.isInput) || (deviceType.isOutput && !device.isOutput) {
+    if (deviceType.hasInput && !device.hasInput) || (deviceType.hasOutput && !device.hasOutput) {
       throw Error.invalidDevice
     }
     
