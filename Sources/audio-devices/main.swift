@@ -267,7 +267,7 @@ class GetVolumeCommand: Command {
 
   func execute() throws {
     let device = getDevice(deviceId: deviceId)
-    if let volume = device.getVolume() {
+    if let volume = device.volume {
       print(String(format: "%.2f", volume))
     } else {
       print("\(device.name) does not support volume", to: .standardError)
@@ -282,10 +282,10 @@ class SetVolumeCommand: Command {
   @Param var volume: Double
 
   func execute() throws {
-    var device = getDevice(deviceId: deviceId)
+    let device = getDevice(deviceId: deviceId)
 
     do {
-      try device.setVolume(volume)
+      try device.setVolume(to: volume)
     } catch AudioDevices.Error.volumeNotSupported {
       print("\(device.name) does not support volume", to: .standardError)
     } catch AudioDevices.Error.invalidVolumeValue {
@@ -311,7 +311,7 @@ class GetMuteCommand: Command {
   func execute() throws {
     let device = getDevice(deviceId: deviceId)
 
-    if let isMuted = device.getMute() {
+    if let isMuted = device.isMuted {
       print(isMuted)
     } else {
       print("\(device.name) does not support muting", to: .standardError)
@@ -325,7 +325,7 @@ class ToggleMuteCommand: Command {
   @Param var deviceId: Int
 
   func execute() throws {
-    var device = getDevice(deviceId: deviceId)
+    let device = getDevice(deviceId: deviceId)
     
     do {
       try device.toggleMute()

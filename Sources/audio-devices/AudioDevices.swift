@@ -45,7 +45,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     hasOutput = outputChannels > 0
   }
   
-  func getInputVolume() -> Double? {
+  var inputVolume: Double? {
     do {
       var deviceVolume: Float32 = 0.0
       try CoreAudioData.getAudioData(
@@ -60,8 +60,8 @@ struct AudioDevice: Hashable, Codable, Identifiable {
       return nil
     }
   }
-  
-  func getOutputVolume() -> Double? {
+
+  var outputVolume: Double? {
     do {
       var deviceVolume: Float32 = 0.0
       try CoreAudioData.getAudioData(
@@ -77,19 +77,58 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     }
   }
   
-  func getVolume() -> Double? {
+  var volume: Double? {
     // TODO: need to think how to handle when hasInput && hasOutput
     if hasInput {
-      return getInputVolume()
+      return self.inputVolume
     }
     if hasOutput {
-      return getOutputVolume()
+      return self.outputVolume
     }
     
     return nil
   }
+
+  func setVolume(to newVolume: Double, for type: AudioDeviceType) throws {
+    if (type.hasInput) {
+      guard (0...1).contains(newVolume) else {
+        throw AudioDevices.Error.invalidVolumeValue
+      }
+      
+      var value = Float32(newVolume)
+      try CoreAudioData.setAudioData(
+        id: id,
+        selector: kAudioDevicePropertyVolumeScalar,
+        scope: kAudioDevicePropertyScopeInput,
+        value: &value
+      )
+    }
+    if (type.hasOutput) {
+      guard (0...1).contains(newVolume) else {
+        throw AudioDevices.Error.invalidVolumeValue
+      }
+      
+      var value = Float32(newVolume)
+      try CoreAudioData.setAudioData(
+        id: id,
+        selector: kAudioHardwareServiceDeviceProperty_VirtualMasterVolume,
+        scope: kAudioDevicePropertyScopeOutput,
+        value: &value
+      )
+    }
+  }
+
+  func setVolume(to newVolume: Double) throws {
+    // TODO: need to think how to handle when hasInput && hasOutput
+    if hasInput {
+      return try setVolume(to: newVolume, for: .input)
+    }
+    if hasOutput {
+      return try setVolume(to: newVolume, for: .output)
+    }
+  }
   
-  func getInputMute() -> Bool? {
+  var isInputMuted: Bool? {
     do {
       var muteValue: UInt32 = 0
       try CoreAudioData.getAudioData(
@@ -105,7 +144,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     }
   }
   
-  func getOutputMute() -> Bool? {
+  var isOutputMuted: Bool? {
     do {
       var muteValue: UInt32 = 0
       try CoreAudioData.getAudioData(
@@ -121,93 +160,57 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     }
   }
   
-  func getMute() -> Bool? {
+  var isMuted: Bool? {
     // TODO: need to think how to handle when hasInput && hasOutput
     if hasInput {
-      return getInputMute()
+      return self.isInputMuted
     }
     if hasOutput {
-      return getOutputMute()
+      return self.isOutputMuted
     }
     
     return nil
   }
-  
-  mutating func setInputVolume(_ newVolume: Double) throws {
-    guard (0...1).contains(newVolume) else {
-      throw AudioDevices.Error.invalidVolumeValue
+
+  func toggleMute(for type: AudioDeviceType) throws {
+    if (type.hasInput) {
+      guard let isInputMuted = self.isInputMuted else {
+        throw AudioDevices.Error.muteNotSupported
+      }
+      
+      var newValue = NSNumber(booleanLiteral: !isInputMuted).uint32Value
+      
+      try CoreAudioData.setAudioData(
+        id: id,
+        selector: kAudioDevicePropertyMute,
+        scope: kAudioDevicePropertyScopeInput,
+        value: &newValue
+      )
     }
-    
-    var value = Float32(newVolume)
-    try CoreAudioData.setAudioData(
-      id: id,
-      selector: kAudioDevicePropertyVolumeScalar,
-      scope: kAudioDevicePropertyScopeInput,
-      value: &value
-    )
-  }
-  
-  mutating func setOutputVolume(_ newVolume: Double) throws {
-    guard (0...1).contains(newVolume) else {
-      throw AudioDevices.Error.invalidVolumeValue
+
+    if (type.hasOutput) {
+      guard let isOutputMuted = self.isOutputMuted else {
+        throw AudioDevices.Error.muteNotSupported
+      }
+      
+      var newValue = NSNumber(booleanLiteral: !isOutputMuted).uint32Value
+      
+      try CoreAudioData.setAudioData(
+        id: id,
+        selector: kAudioDevicePropertyMute,
+        scope: kAudioDevicePropertyScopeOutput,
+        value: &newValue
+      )
     }
-    
-    var value = Float32(newVolume)
-    try CoreAudioData.setAudioData(
-      id: id,
-      selector: kAudioHardwareServiceDeviceProperty_VirtualMasterVolume,
-      scope: kAudioDevicePropertyScopeOutput,
-      value: &value
-    )
   }
-  
-  mutating func setVolume(_ newVolume: Double) throws {
+
+  func toggleMute() throws {
     // TODO: need to think how to handle when hasInput && hasOutput
     if hasInput {
-      return try setInputVolume(newVolume)
+      return try toggleMute(for: .input)
     }
     if hasOutput {
-      return try setOutputVolume(newVolume)
-    }
-  }
-  
-  mutating func toggleInputMute() throws {
-    guard let isInputMuted = getInputMute() else {
-      throw AudioDevices.Error.muteNotSupported
-    }
-    
-    var newValue = NSNumber(booleanLiteral: !isInputMuted).uint32Value
-    
-    try CoreAudioData.setAudioData(
-      id: id,
-      selector: kAudioDevicePropertyMute,
-      scope: kAudioDevicePropertyScopeInput,
-      value: &newValue
-    )
-  }
-  
-  mutating func toggleOutputMute() throws {
-    guard let isOutputMuted = getOutputMute() else {
-      throw AudioDevices.Error.muteNotSupported
-    }
-    
-    var newValue = NSNumber(booleanLiteral: !isOutputMuted).uint32Value
-    
-    try CoreAudioData.setAudioData(
-      id: id,
-      selector: kAudioDevicePropertyMute,
-      scope: kAudioDevicePropertyScopeOutput,
-      value: &newValue
-    )
-  }
-  
-  mutating func toggleMute() throws {
-    // TODO: need to think how to handle when hasInput && hasOutput
-    if hasInput {
-      return try toggleInputMute()
-    }
-    if hasOutput {
-      return try toggleOutputMute()
+      return try toggleMute(for: .output)
     }
   }
 }
