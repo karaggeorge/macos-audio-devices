@@ -15,6 +15,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
   let isInput: Bool
   let isOutput: Bool
   var volume: Double?
+  var transportType: String
 
   init(withId deviceId: AudioDeviceID) throws {
     id = deviceId
@@ -36,6 +37,50 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     }
 
     uid = deviceUID as String
+
+    var deviceTransportType: UInt32 = 0
+    do {
+      try CoreAudioData.get(
+        id: deviceId,
+        selector: kAudioDevicePropertyTransportType,
+        value: &deviceTransportType
+      )
+    } catch {
+      deviceTransportType = 0
+    }
+
+    switch deviceTransportType {
+      case kAudioDeviceTransportTypeBluetooth,
+           kAudioDeviceTransportTypeBluetoothLE:
+        transportType = "bluetooth"
+
+      case kAudioDeviceTransportTypeBuiltIn:
+        transportType = "built-in"
+
+      case kAudioDeviceTransportTypeDisplayPort:
+        transportType = "displayport"
+
+      case kAudioDeviceTransportTypeFireWire:
+        transportType = "firewire"
+
+      case kAudioDeviceTransportTypeHDMI:
+        transportType = "hdmi"
+
+      case kAudioDeviceTransportTypePCI:
+        transportType = "pci"
+
+      case kAudioDeviceTransportTypeThunderbolt:
+        transportType = "thunderbolt"
+
+      case kAudioDeviceTransportTypeUSB:
+        transportType = "usb"
+
+      case kAudioDeviceTransportTypeVirtual:
+        transportType = "virtual"
+
+      default:
+        transportType = "unknown"
+    }
 
     let inputChannels: UInt32 = try CoreAudioData.size(
       id: deviceId,
