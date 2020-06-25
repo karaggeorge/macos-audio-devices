@@ -10,21 +10,56 @@ struct AudioDevice: Hashable, Codable, Identifiable {
   }
 
   enum TransportType: String, Codable {
-    case avb,
-         aggregate,
-         airplay,
-         autoaggregate,
-         bluetooth,
-         bluetoothle,
-         builtin,
-         displayport,
-         firewire,
-         hdmi,
-         pci,
-         thunderbolt,
-         usb,
-         virtual,
-         unknown
+    case avb
+    case aggregate
+    case airplay
+    case autoaggregate
+    case bluetooth
+    case bluetoothle
+    case builtin
+    case displayport
+    case firewire
+    case hdmi
+    case pci
+    case thunderbolt
+    case usb
+    case virtual
+    case unknown
+
+    init(for deviceTransportType: UInt32) {
+      switch deviceTransportType {
+        case kAudioDeviceTransportTypeAVB:
+          self = .avb
+        case kAudioDeviceTransportTypeAggregate:
+          self = .aggregate
+        case kAudioDeviceTransportTypeAirPlay:
+          self = .airplay
+        case kAudioDeviceTransportTypeAutoAggregate:
+          self = .autoaggregate
+        case kAudioDeviceTransportTypeBluetooth:
+          self = .bluetooth
+        case kAudioDeviceTransportTypeBluetoothLE:
+          self = .bluetoothle
+        case kAudioDeviceTransportTypeBuiltIn:
+          self = .builtin
+        case kAudioDeviceTransportTypeDisplayPort:
+          self = .displayport
+        case kAudioDeviceTransportTypeFireWire:
+          self = .firewire
+        case kAudioDeviceTransportTypeHDMI:
+          self = .hdmi
+        case kAudioDeviceTransportTypePCI:
+          self = .pci
+        case kAudioDeviceTransportTypeThunderbolt:
+          self = .thunderbolt
+        case kAudioDeviceTransportTypeUSB:
+          self = .usb
+        case kAudioDeviceTransportTypeVirtual:
+          self = .virtual
+        default:
+          self = .unknown
+      }
+    }
   }
 
   let id: AudioDeviceID
@@ -67,23 +102,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
       deviceTransportType = 0
     }
 
-    switch deviceTransportType {
-      case kAudioDeviceTransportTypeAVB:           transportType = TransportType.avb
-      case kAudioDeviceTransportTypeAggregate:     transportType = TransportType.aggregate
-      case kAudioDeviceTransportTypeAirPlay:       transportType = TransportType.airplay
-      case kAudioDeviceTransportTypeAutoAggregate: transportType = TransportType.autoaggregate
-      case kAudioDeviceTransportTypeBluetooth:     transportType = TransportType.bluetooth
-      case kAudioDeviceTransportTypeBluetoothLE:   transportType = TransportType.bluetoothle
-      case kAudioDeviceTransportTypeBuiltIn:       transportType = TransportType.builtin
-      case kAudioDeviceTransportTypeDisplayPort:   transportType = TransportType.displayport
-      case kAudioDeviceTransportTypeFireWire:      transportType = TransportType.firewire
-      case kAudioDeviceTransportTypeHDMI:          transportType = TransportType.hdmi
-      case kAudioDeviceTransportTypePCI:           transportType = TransportType.pci
-      case kAudioDeviceTransportTypeThunderbolt:   transportType = TransportType.thunderbolt
-      case kAudioDeviceTransportTypeUSB:           transportType = TransportType.usb
-      case kAudioDeviceTransportTypeVirtual:       transportType = TransportType.virtual
-      default:                                     transportType = TransportType.unknown
-    }
+    transportType = TransportType(for: deviceTransportType)
 
     let inputChannels: UInt32 = try CoreAudioData.size(
       id: deviceId,

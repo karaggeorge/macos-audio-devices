@@ -92,6 +92,29 @@ Whether the device is an input device.
 
 A number between 0 and 1 representing the volume setting of the device. Only applicable on output devices that support it. It will be undefined otherwise.
 
+##### `transportType: TransportType`
+
+The value of this property represents the [transport type](https://developer.apple.com/documentation/avfoundation/avcapturedevice/1387804-transporttype) of the device (USB, PCI, etc).
+
+#### `TransportType: string`
+
+Can be one of:
+- `avb`
+- `aggregate`
+- `airplay`
+- `autoaggregate`
+- `bluetooth`
+- `bluetoothle`
+- `builtin`
+- `displayport`
+- `firewire`
+- `hdmi`
+- `pci`
+- `thunderbolt`
+- `usb`
+- `virtual`
+- `unknown`
+
 #### Sync
 
 Each method described below is asynchronous, but can be called synchronously, by calling `.sync` on it instead. For example:

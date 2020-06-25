@@ -1,3 +1,21 @@
+
+export type TransportType =
+  'avb' |
+  'aggregate' |
+  'airplay' |
+  'autoaggregate' |
+  'bluetooth' |
+  'bluetoothle' |
+  'builtin' |
+  'displayport' |
+  'firewire' |
+  'hdmi' |
+  'pci' |
+  'thunderbolt' |
+  'usb' |
+  'virtual' |
+  'unknown'
+
 export interface Device {
   /*
   The unique ID of the device.
@@ -30,6 +48,11 @@ export interface Device {
   Only applicable on output devices that support it. It will be undefined otherwise.
   */
   volume?: number;
+
+  /**
+  The [transport type](https://developer.apple.com/documentation/avfoundation/avcapturedevice/1387804-transporttype) of the device
+  */
+  transportType: TransportType
 }
 
 export const getAllDevices: {
