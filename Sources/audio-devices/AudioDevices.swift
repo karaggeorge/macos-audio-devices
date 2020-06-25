@@ -26,7 +26,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     case virtual
     case unknown
 
-    init(for deviceTransportType: UInt32) {
+    init(rawTransportType deviceTransportType: UInt32) {
       switch deviceTransportType {
         case kAudioDeviceTransportTypeAVB:
           self = .avb
@@ -102,7 +102,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
       deviceTransportType = 0
     }
 
-    transportType = TransportType(for: deviceTransportType)
+    transportType = TransportType(rawTransportType: deviceTransportType)
 
     let inputChannels: UInt32 = try CoreAudioData.size(
       id: deviceId,

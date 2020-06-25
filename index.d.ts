@@ -1,20 +1,19 @@
 
-export type TransportType =
-  'avb' |
-  'aggregate' |
-  'airplay' |
-  'autoaggregate' |
-  'bluetooth' |
-  'bluetoothle' |
-  'builtin' |
-  'displayport' |
-  'firewire' |
-  'hdmi' |
-  'pci' |
-  'thunderbolt' |
-  'usb' |
-  'virtual' |
-  'unknown'
+export type TransportType = 'avb'
+  | 'aggregate'
+  | 'airplay'
+  | 'autoaggregate'
+  | 'bluetooth'
+  | 'bluetoothle'
+  | 'builtin'
+  | 'displayport'
+  | 'firewire'
+  | 'hdmi'
+  | 'pci'
+  | 'thunderbolt'
+  | 'usb'
+  | 'virtual'
+  | 'unknown'
 
 export interface Device {
   /*
@@ -50,7 +49,7 @@ export interface Device {
   volume?: number;
 
   /**
-  The [transport type](https://developer.apple.com/documentation/avfoundation/avcapturedevice/1387804-transporttype) of the device
+  The [transport type](https://developer.apple.com/documentation/avfoundation/avcapturedevice/1387804-transporttype) of the device.
   */
   transportType: TransportType
 }
