@@ -6,7 +6,7 @@ Requires macOS 10.12 or later. macOS 10.13 or earlier needs to download the [Swi
 
 ## Run as CLI
 
-### Using [npx](https://github.com/zkat/npx)
+### Using [npx](https://github.com/npm/npx)
 
 ```
 $ npx macos-audio-devices
