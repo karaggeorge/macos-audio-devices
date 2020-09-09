@@ -9,6 +9,143 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     case invalidVolumeValue
   }
 
+  let id: AudioDeviceID
+  let name: String
+  let uid: String
+  let isInput: Bool
+  let isOutput: Bool
+  var transportType: TransportType
+
+  init(withId deviceId: AudioDeviceID) throws {
+    self.id = deviceId
+
+    var deviceName = "" as CFString
+    var deviceUID = "" as CFString
+
+    do {
+      try CoreAudioData.get(id: deviceId, selector: kAudioObjectPropertyName, value: &deviceName)
+      try CoreAudioData.get(id: deviceId, selector: kAudioDevicePropertyDeviceUID, value: &deviceUID)
+    } catch {
+      throw Error.invalidDeviceId
+    }
+
+    self.name = deviceName as String
+    self.uid = deviceUID as String
+
+    var deviceTransportType: UInt32 = 0
+    do {
+      try CoreAudioData.get(
+        id: deviceId,
+        selector: kAudioDevicePropertyTransportType,
+        value: &deviceTransportType
+      )
+    } catch {
+      deviceTransportType = 0
+    }
+
+    self.transportType = TransportType(rawTransportType: deviceTransportType)
+
+    let inputChannels: UInt32 = try CoreAudioData.size(
+      id: deviceId,
+      selector: kAudioDevicePropertyStreams,
+      scope: kAudioDevicePropertyScopeInput
+    )
+
+    isInput = inputChannels > 0
+
+    let outputChannels: UInt32 = try CoreAudioData.size(
+      id: deviceId,
+      selector: kAudioDevicePropertyStreams,
+      scope: kAudioDevicePropertyScopeOutput
+    )
+
+    isOutput = outputChannels > 0
+  }
+
+  var volume: Double? {
+    let hasVolume = CoreAudioData.has(
+      id: id,
+      selector: kAudioDevicePropertyVolumeScalar,
+      scope: kAudioDevicePropertyScopeOutput
+    )
+
+    guard hasVolume else {
+      return nil
+    }
+
+    var deviceVolume: Float32 = 0
+    do {
+      try CoreAudioData.get(
+        id: id,
+        selector: kAudioDevicePropertyVolumeScalar,
+        scope: kAudioDevicePropertyScopeOutput,
+        value: &deviceVolume
+      )
+
+      return Double(deviceVolume)
+    } catch {
+      return nil
+    }
+  }
+
+  func setVolume(_ newVolume: Double) throws {
+    guard volume != nil else {
+      throw Error.volumeNotSupported
+    }
+
+    guard (0...1).contains(newVolume) else {
+      throw Error.invalidVolumeValue
+    }
+
+    var value = Float32(newVolume)
+    try CoreAudioData.set(
+      id: id,
+      selector: kAudioDevicePropertyVolumeScalar,
+      scope: kAudioDevicePropertyScopeOutput,
+      value: &value
+    )
+  }
+
+  func isDefault(for deviceType: DeviceType) -> Bool {
+    guard let defaultDevice = try? Self.getDefaultDevice(for: deviceType) else {
+      return false
+    }
+
+    return self == defaultDevice
+  }
+
+  func setAsDefault(for deviceType: DeviceType) throws {
+    try Self.setDefaultDevice(for: deviceType, device: self)
+  }
+}
+
+extension AudioDevice {
+  struct DeviceType {
+    let selector: AudioObjectPropertySelector
+    let isInput: Bool
+    let isOutput: Bool
+
+    static let input = Self(
+      selector: kAudioHardwarePropertyDefaultInputDevice,
+      isInput: true,
+      isOutput: false
+    )
+
+    static let output = Self(
+      selector: kAudioHardwarePropertyDefaultOutputDevice,
+      isInput: false,
+      isOutput: true
+    )
+
+    static let system = Self(
+      selector: kAudioHardwarePropertyDefaultSystemOutputDevice,
+      isInput: false,
+      isOutput: true
+    )
+  }
+}
+
+extension AudioDevice {
   enum TransportType: String, Codable {
     case avb
     case aggregate
@@ -28,167 +165,39 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
     init(rawTransportType deviceTransportType: UInt32) {
       switch deviceTransportType {
-        case kAudioDeviceTransportTypeAVB:
-          self = .avb
-        case kAudioDeviceTransportTypeAggregate:
-          self = .aggregate
-        case kAudioDeviceTransportTypeAirPlay:
-          self = .airplay
-        case kAudioDeviceTransportTypeAutoAggregate:
-          self = .autoaggregate
-        case kAudioDeviceTransportTypeBluetooth:
-          self = .bluetooth
-        case kAudioDeviceTransportTypeBluetoothLE:
-          self = .bluetoothle
-        case kAudioDeviceTransportTypeBuiltIn:
-          self = .builtin
-        case kAudioDeviceTransportTypeDisplayPort:
-          self = .displayport
-        case kAudioDeviceTransportTypeFireWire:
-          self = .firewire
-        case kAudioDeviceTransportTypeHDMI:
-          self = .hdmi
-        case kAudioDeviceTransportTypePCI:
-          self = .pci
-        case kAudioDeviceTransportTypeThunderbolt:
-          self = .thunderbolt
-        case kAudioDeviceTransportTypeUSB:
-          self = .usb
-        case kAudioDeviceTransportTypeVirtual:
-          self = .virtual
-        default:
-          self = .unknown
+      case kAudioDeviceTransportTypeAVB:
+        self = .avb
+      case kAudioDeviceTransportTypeAggregate:
+        self = .aggregate
+      case kAudioDeviceTransportTypeAirPlay:
+        self = .airplay
+      case kAudioDeviceTransportTypeAutoAggregate:
+        self = .autoaggregate
+      case kAudioDeviceTransportTypeBluetooth:
+        self = .bluetooth
+      case kAudioDeviceTransportTypeBluetoothLE:
+        self = .bluetoothle
+      case kAudioDeviceTransportTypeBuiltIn:
+        self = .builtin
+      case kAudioDeviceTransportTypeDisplayPort:
+        self = .displayport
+      case kAudioDeviceTransportTypeFireWire:
+        self = .firewire
+      case kAudioDeviceTransportTypeHDMI:
+        self = .hdmi
+      case kAudioDeviceTransportTypePCI:
+        self = .pci
+      case kAudioDeviceTransportTypeThunderbolt:
+        self = .thunderbolt
+      case kAudioDeviceTransportTypeUSB:
+        self = .usb
+      case kAudioDeviceTransportTypeVirtual:
+        self = .virtual
+      default:
+        self = .unknown
       }
     }
   }
-
-  let id: AudioDeviceID
-  let name: String
-  let uid: String
-  let isInput: Bool
-  let isOutput: Bool
-  var volume: Double?
-  var transportType: TransportType
-
-  init(withId deviceId: AudioDeviceID) throws {
-    id = deviceId
-    var deviceName = "" as CFString
-    var deviceUID = "" as CFString
-
-    do {
-      try CoreAudioData.get(id: deviceId, selector: kAudioObjectPropertyName, value: &deviceName)
-    } catch {
-      throw Error.invalidDeviceId
-    }
-
-    name = deviceName as String
-
-    do {
-      try CoreAudioData.get(id: deviceId, selector: kAudioDevicePropertyDeviceUID, value: &deviceUID)
-    } catch {
-      throw Error.invalidDeviceId
-    }
-
-    uid = deviceUID as String
-
-    var deviceTransportType: UInt32 = 0
-    do {
-      try CoreAudioData.get(
-        id: deviceId,
-        selector: kAudioDevicePropertyTransportType,
-        value: &deviceTransportType
-      )
-    } catch {
-      deviceTransportType = 0
-    }
-
-    transportType = TransportType(rawTransportType: deviceTransportType)
-
-    let inputChannels: UInt32 = try CoreAudioData.size(
-      id: deviceId,
-      selector: kAudioDevicePropertyStreams,
-      scope: kAudioDevicePropertyScopeInput
-    )
-
-    isInput = inputChannels > 0
-
-    let outputChannels: UInt32 = try CoreAudioData.size(
-      id: deviceId,
-      selector: kAudioDevicePropertyStreams,
-      scope: kAudioDevicePropertyScopeOutput
-    )
-
-    isOutput = outputChannels > 0
-
-    let hasVolume = CoreAudioData.has(
-      id: deviceId,
-      selector: kAudioDevicePropertyVolumeScalar,
-      scope: kAudioDevicePropertyScopeOutput
-    )
-
-    if hasVolume {
-      var deviceVolume: Float32 = 0.0
-
-      do {
-        try CoreAudioData.get(
-          id: deviceId,
-          selector: kAudioDevicePropertyVolumeScalar,
-          scope: kAudioDevicePropertyScopeOutput,
-          value: &deviceVolume
-        )
-
-        volume = Double(deviceVolume)
-      } catch {
-        volume = nil
-      }
-    } else {
-      volume = nil
-    }
-  }
-
-  mutating func setVolume(_ newVolume: Double) throws {
-    guard volume != nil else {
-      throw Error.volumeNotSupported
-    }
-
-    guard (0...1).contains(newVolume) else {
-      throw Error.invalidVolumeValue
-    }
-
-    var value = Float32(newVolume)
-    try CoreAudioData.set(
-      id: id,
-      selector: kAudioDevicePropertyVolumeScalar,
-      scope: kAudioDevicePropertyScopeOutput,
-      value: &value
-    )
-
-    volume = newVolume
-  }
-}
-
-struct AudioDeviceType {
-  let selector: AudioObjectPropertySelector
-  let isInput: Bool
-  let isOutput: Bool
-
-  static let input = AudioDeviceType(
-    selector: kAudioHardwarePropertyDefaultInputDevice,
-    isInput: true,
-    isOutput: false
-  )
-
-  static let output = AudioDeviceType(
-    selector: kAudioHardwarePropertyDefaultOutputDevice,
-    isInput: false,
-    isOutput: true
-  )
-
-  static let system = AudioDeviceType(
-    selector: kAudioHardwarePropertyDefaultSystemOutputDevice,
-    isInput: false,
-    isOutput: true
-  )
 }
 
 extension AudioDevice {
@@ -196,7 +205,6 @@ extension AudioDevice {
     do {
       let devicesSize = try CoreAudioData.size(selector: kAudioHardwarePropertyDevices)
       let devicesLength = devicesSize / UInt32(MemoryLayout<AudioDeviceID>.size)
-
       var deviceIds: [AudioDeviceID] = Array(repeating: 0, count: Int(devicesLength))
 
       try CoreAudioData.get(
@@ -219,7 +227,7 @@ extension AudioDevice {
     all.filter { $0.isOutput }
   }
 
-  static func getDefaultDevice(for deviceType: AudioDeviceType) throws -> Self {
+  static func getDefaultDevice(for deviceType: DeviceType) throws -> Self {
     var deviceId: AudioDeviceID = 0
 
     try CoreAudioData.get(
@@ -230,7 +238,7 @@ extension AudioDevice {
     return try self.init(withId: deviceId)
   }
 
-  static func setDefaultDevice(for deviceType: AudioDeviceType, device: Self) throws {
+  static func setDefaultDevice(for deviceType: DeviceType, device: Self) throws {
     if (deviceType.isInput && !device.isInput) || (deviceType.isOutput && !device.isOutput) {
       throw Error.invalidDevice
     }
@@ -300,7 +308,7 @@ extension AudioDevice {
   }
 }
 
-struct CoreAudioData {
+private struct CoreAudioData {
   static func get<T>(
     id: UInt32 = AudioObjectID(kAudioObjectSystemObject),
     selector: AudioObjectPropertySelector,
