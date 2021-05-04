@@ -381,7 +381,6 @@ audioDevices.commands = [
   SystemGroup(),
   VolumeGroup(),
   MuteGroup(),
-  ToggleMuteCommand(),
   AggregateGroup()
 ]
 
