@@ -29,11 +29,13 @@ Groups:
   input           Get or set the default input device
   system          Get or set the default device for system sounds
   volume          Get or set the volume of an output device
+  mute            Mute or unmute audio device
   aggregate       Create or delete aggregate audio devices
 
 Commands:
   list            List the available audio devices
   get             Get a device by its ID
+  toggle          Change mutinying state for audio device
   help            Prints help information
 ```
 
@@ -204,6 +206,22 @@ The [unique ID](#id-number) of the supported output device.
 ##### `volume: number`
 
 The volume level to set the device to. Must be between 0 and 1, otherwise and error will be thrown.
+
+#### `getDeviceMute(deviceId: number): Promise<void>`
+
+Get mutinying state for audio device.
+
+##### `deviceId: number`
+
+The [unique ID](#id-number) of the supported device.
+
+#### `toggleDeviceMute(deviceId: number): Promise<void>`
+
+Toggle mutinying state for audio device.
+
+##### `deviceId: number`
+
+The [unique ID](#id-number) of the supported device.
 
 #### `createAggregateDevice(name: string, mainDeviceId: number, otherDeviceIds: number[], options: object): Promise<Device>`
 
