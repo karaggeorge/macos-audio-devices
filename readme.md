@@ -35,7 +35,7 @@ Groups:
 Commands:
   list            List the available audio devices
   get             Get a device by its ID
-  toggle          Change mutinying state for audio device
+  toggle          Change muting state for audio device
   help            Prints help information
 ```
 
@@ -209,7 +209,7 @@ The volume level to set the device to. Must be between 0 and 1, otherwise and er
 
 #### `getDeviceMute(deviceId: number): Promise<void>`
 
-Get mutinying state for audio device.
+Get muting state for audio device.
 
 ##### `deviceId: number`
 
@@ -217,7 +217,7 @@ The [unique ID](#id-number) of the supported device.
 
 #### `toggleDeviceMute(deviceId: number): Promise<void>`
 
-Toggle mutinying state for audio device.
+Toggle muting state for audio device.
 
 ##### `deviceId: number`
 
