@@ -302,7 +302,7 @@ final class GetMuteCommand: Command {
 }
 
 final class ToggleMuteCommand: Command {
-  let shortDescription = "Change device mutening state"
+  let shortDescription = "Change device mutinying state"
   let name = "toggle"
 
   @Param var deviceId: Int
