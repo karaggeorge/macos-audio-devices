@@ -370,6 +370,60 @@ export const setOutputDeviceVolume: {
   sync: (deviceId: number, volume: number) => void;
 };
 
+export const getDeviceMute: {
+  /**
+  Get the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @returns A promise that resolves with the mute state of the device.
+
+  @example
+  ```
+  const mute = await getDeviceMute(74);
+  ```
+  */
+  (deviceId: number): Promise<boolean>;
+
+  /**
+  Get the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @returns The mute state of the device.
+
+  @example
+  ```
+  const mute = getDeviceMute.sync(74);
+  ```
+  */
+  sync: (deviceId: number) => boolean;
+};
+
+export const toggleDeviceMute: {
+  /**
+  Toggle mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+
+  @example
+  ```
+  await toggleDeviceMute(74);
+  ```
+  */
+  (deviceId: number): Promise<void>;
+
+  /**
+  Toggle mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+
+  @example
+  ```
+  toggleDeviceMute.sync(74);
+  ```
+  */
+  sync: (deviceId: number) => void;
+};
+
 export const createAggregateDevice: {
   /**
   Create an [aggregate device](https://support.apple.com/en-us/HT202000) from other existing devices.

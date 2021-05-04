@@ -265,7 +265,7 @@ final class SetVolumeCommand: Command {
   @Param var volume: Double
 
   func execute() throws {
-    var device = try getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
 
     do {
       try device.setVolume(volume)
@@ -276,6 +276,40 @@ final class SetVolumeCommand: Command {
     } catch {
       throw error
     }
+  }
+}
+
+final class MuteGroup: CommandGroup {
+  let shortDescription = "Mute or unmute device"
+  let name = "mute"
+  let children = [GetMuteCommand(), ToggleMuteCommand()] as [Routable]
+}
+
+final class GetMuteCommand: Command {
+  let name = "get"
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    let device = try getDevice(deviceId: deviceId)
+
+    if let isMuted = device.isMuted {
+      print(isMuted)
+    } else {
+      print("\(device.name) does not support muting", to: .standardError)
+    }
+  }
+}
+
+final class ToggleMuteCommand: Command {
+  let shortDescription = "Change device mutening state"
+  let name = "toggle"
+
+  @Param var deviceId: Int
+
+  func execute() throws {
+    let device = try getDevice(deviceId: deviceId)
+    try device.toggleMute()
   }
 }
 
@@ -346,6 +380,8 @@ audioDevices.commands = [
   InputGroup(),
   SystemGroup(),
   VolumeGroup(),
+  MuteGroup(),
+  ToggleMuteCommand(),
   AggregateGroup()
 ]
 

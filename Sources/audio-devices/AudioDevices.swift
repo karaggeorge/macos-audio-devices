@@ -7,6 +7,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     case invalidDevice
     case volumeNotSupported
     case invalidVolumeValue
+    case muteNotSupported
   }
 
   let id: AudioDeviceID
@@ -104,6 +105,92 @@ struct AudioDevice: Hashable, Codable, Identifiable {
       scope: kAudioDevicePropertyScopeOutput,
       value: &value
     )
+  }
+
+  var isInputMuted: Bool? {
+    do {
+      var muteValue: UInt32 = 0
+      try CoreAudioData.get(
+        id: id,
+        selector: kAudioDevicePropertyMute,
+        scope: kAudioDevicePropertyScopeInput,
+        value: &muteValue
+      )
+      
+      return muteValue != 0
+    } catch {
+      return nil
+    }
+  }
+  
+  var isOutputMuted: Bool? {
+    do {
+      var muteValue: UInt32 = 0
+      try CoreAudioData.get(
+        id: id,
+        selector: kAudioDevicePropertyMute,
+        scope: kAudioDevicePropertyScopeOutput,
+        value: &muteValue
+      )
+      
+      return muteValue != 0
+    } catch {
+      return nil
+    }
+  }
+
+  var isMuted: Bool? {
+    guard !(isInput && isOutput) else {
+      return nil
+    }
+
+    if isInput {
+      return self.isInputMuted
+    }
+    if isOutput {
+      return self.isOutputMuted
+    }
+
+    return nil
+  }
+
+  func toggleInputMute() throws {
+    guard let isInputMuted = self.isInputMuted else {
+      throw AudioDevice.Error.muteNotSupported
+    }
+    
+    var newValue = NSNumber(booleanLiteral: !isInputMuted).uint32Value
+    
+    try CoreAudioData.set(
+      id: id,
+      selector: kAudioDevicePropertyMute,
+      scope: kAudioDevicePropertyScopeInput,
+      value: &newValue
+    )
+  }
+  
+  func toggleOutputMute() throws {
+    guard let isOutputMuted = self.isOutputMuted else {
+      throw AudioDevice.Error.muteNotSupported
+    }
+    
+    var newValue = NSNumber(booleanLiteral: !isOutputMuted).uint32Value
+    
+    try CoreAudioData.set(
+      id: id,
+      selector: kAudioDevicePropertyMute,
+      scope: kAudioDevicePropertyScopeOutput,
+      value: &newValue
+    )
+  }
+
+  func toggleMute() throws {
+    if isInput {
+      return try toggleInputMute()
+    }
+    if isOutput {
+      return try toggleOutputMute()
+    }
   }
 
   func isDefault(for deviceType: DeviceType) -> Bool {
