@@ -154,13 +154,10 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     return nil
   }
 
-  func toggleInputMute() throws {
-    guard let isInputMuted = self.isInputMuted else {
-      throw AudioDevice.Error.muteNotSupported
-    }
-    
-    var newValue = NSNumber(booleanLiteral: !isInputMuted).uint32Value
-    
+
+  func setInputDeviceMuted(_ isMuted: Bool) throws {
+    var newValue = NSNumber(booleanLiteral: isMuted).uint32Value
+
     try CoreAudioData.set(
       id: id,
       selector: kAudioDevicePropertyMute,
@@ -168,20 +165,42 @@ struct AudioDevice: Hashable, Codable, Identifiable {
       value: &newValue
     )
   }
-  
-  func toggleOutputMute() throws {
-    guard let isOutputMuted = self.isOutputMuted else {
-      throw AudioDevice.Error.muteNotSupported
-    }
-    
-    var newValue = NSNumber(booleanLiteral: !isOutputMuted).uint32Value
-    
+
+  func setOutputDeviceMuted(_ isMuted: Bool) throws {
+    var newValue = NSNumber(booleanLiteral: isMuted).uint32Value
+
     try CoreAudioData.set(
       id: id,
       selector: kAudioDevicePropertyMute,
       scope: kAudioDevicePropertyScopeOutput,
       value: &newValue
     )
+  }
+
+  func setDeviceMuted(_ isMuted: Bool) throws {
+    if isInput {
+      try setInputDeviceMuted(isMuted)
+    }
+    if isOutput {
+      try setOutputDeviceMuted(isMuted)
+    }
+  }
+
+
+  func toggleInputMute() throws {
+    guard let isMuted = self.isInputMuted else {
+      throw AudioDevice.Error.muteNotSupported
+    }
+
+    try setInputDeviceMuted(!isMuted)
+  }
+
+  func toggleOutputMute() throws {
+    guard let isMuted = self.isOutputMuted else {
+      throw AudioDevice.Error.muteNotSupported
+    }
+
+    try setOutputDeviceMuted(!isMuted)
   }
 
   func toggleMute() throws {

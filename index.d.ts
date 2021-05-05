@@ -398,6 +398,34 @@ export const getDeviceMute: {
   sync: (deviceId: number) => boolean;
 };
 
+export const setDeviceMute: {
+  /**
+  Set the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param isMuted  - Boolean value which indicates whether device is going to mute or not.
+
+  @example
+  ```
+  await setDeviceMute(74, false);
+  ```
+  */
+  (deviceId: number, isMuted: boolean): Promise<void>;
+
+  /**
+  Set the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param isMuted  - Boolean value which indicates whether device is going to mute or not.
+
+  @example
+  ```
+  setDeviceMute.sync(74, false);
+  ```
+  */
+  sync: (deviceId: number, isMuted: boolean) => void;
+};
+
 export const toggleDeviceMute: {
   /**
   Toggle mute state of an device that supports it.

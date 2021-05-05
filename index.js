@@ -54,6 +54,8 @@ generateExport('setOutputDeviceVolume', (deviceId, volume) => ['volume', 'set', 
 
 generateExport('getDeviceMute', deviceId => ['mute', 'get', deviceId], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
 
+generateExport('setDeviceMute', (deviceId, isMuted) => ['mute', 'set', deviceId, isMuted], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
+
 generateExport('toggleDeviceMute', deviceId => ['mute', 'toggle', deviceId], throwIfStderr);
 
 generateExport(

@@ -282,7 +282,7 @@ final class SetVolumeCommand: Command {
 final class MuteGroup: CommandGroup {
   let shortDescription = "Mute or unmute device"
   let name = "mute"
-  let children = [GetMuteCommand(), ToggleMuteCommand()] as [Routable]
+  let children = [GetMuteCommand(), SetMuteCommand(), ToggleMuteCommand()] as [Routable]
 }
 
 final class GetMuteCommand: Command {
@@ -298,6 +298,19 @@ final class GetMuteCommand: Command {
     } else {
       print("\(device.name) does not support muting", to: .standardError)
     }
+  }
+}
+
+final class SetMuteCommand: Command {
+  let shortDescription = "Set device muting state"
+  let name = "set"
+
+  @Param var deviceId: Int
+  @Param var isMuted: Bool
+
+  func execute() throws {
+    let device = try getDevice(deviceId: deviceId)
+    try device.setDeviceMuted(isMuted)
   }
 }
 
