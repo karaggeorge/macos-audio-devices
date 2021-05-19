@@ -1,4 +1,3 @@
-
 export type TransportType = 'avb'
   | 'aggregate'
   | 'airplay'
@@ -14,6 +13,11 @@ export type TransportType = 'avb'
   | 'usb'
   | 'virtual'
   | 'unknown'
+
+export enum ChanelType {
+  input = "input",
+  output = "output"
+}  
 
 export interface Device {
   /*
@@ -375,27 +379,29 @@ export const getDeviceMute: {
   Get the mute state of an device that supports it.
 
   @param deviceId - The ID of the device.
+  @param chanelType - Chanel type (input or output).
   @returns A promise that resolves with the mute state of the device.
 
   @example
   ```
-  const mute = await getDeviceMute(74);
+  const mute = await getDeviceMute(74, ChanelType.input);
   ```
   */
-  (deviceId: number): Promise<boolean>;
+  (deviceId: number, chanelType: ChanelType? = nil): Promise<boolean>;
 
   /**
   Get the mute state of an device that supports it.
 
   @param deviceId - The ID of the device.
+  @param chanelType - Chanel type (input or output).
   @returns The mute state of the device.
 
   @example
   ```
-  const mute = getDeviceMute.sync(74);
+  const mute = getDeviceMute.sync(74, ChanelType.input);
   ```
   */
-  sync: (deviceId: number) => boolean;
+  sync: (deviceId: number, chanelType: ChanelType? = nil) => boolean;
 };
 
 export const setDeviceMute: {
@@ -404,26 +410,28 @@ export const setDeviceMute: {
 
   @param deviceId - The ID of the device.
   @param isMuted  - Boolean value which indicates whether device is going to mute or not.
+  @param chanelType - Chanel type (input or output).
 
   @example
   ```
-  await setDeviceMute(74, false);
+  await setDeviceMute(74, false, ChanelType.input);
   ```
   */
-  (deviceId: number, isMuted: boolean): Promise<void>;
+  (deviceId: number, isMuted: boolean, chanelType: ChanelType? = nil): Promise<void>;
 
   /**
   Set the mute state of an device that supports it.
 
   @param deviceId - The ID of the device.
   @param isMuted  - Boolean value which indicates whether device is going to mute or not.
+  @param chanelType - Chanel type (input or output).
 
   @example
   ```
-  setDeviceMute.sync(74, false);
+  setDeviceMute.sync(74, false, ChanelType.input);
   ```
   */
-  sync: (deviceId: number, isMuted: boolean) => void;
+  sync: (deviceId: number, isMuted: boolean, chanelType: ChanelType? = nil) => void;
 };
 
 export const toggleDeviceMute: {
@@ -431,25 +439,27 @@ export const toggleDeviceMute: {
   Toggle mute state of an device that supports it.
 
   @param deviceId - The ID of the device.
+  @param chanelType - Chanel type (input or output).
 
   @example
   ```
-  await toggleDeviceMute(74);
+  await toggleDeviceMute(74, ChanelType.input);
   ```
   */
-  (deviceId: number): Promise<void>;
+  (deviceId: number, chanelType: ChanelType? = nil): Promise<void>;
 
   /**
   Toggle mute state of an device that supports it.
 
   @param deviceId - The ID of the device.
+  @param chanelType - Chanel type (input or output).
 
   @example
   ```
-  toggleDeviceMute.sync(74);
+  toggleDeviceMute.sync(74, ChanelType.input);
   ```
   */
-  sync: (deviceId: number) => void;
+  sync: (deviceId: number, chanelType: ChanelType? = nil) => void;
 };
 
 export const createAggregateDevice: {

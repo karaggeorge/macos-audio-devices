@@ -1,5 +1,6 @@
 import Cocoa
 import CoreAudio
+import SwiftCLI
 
 struct AudioDevice: Hashable, Codable, Identifiable {
   enum Error: Swift.Error {
@@ -139,21 +140,15 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     }
   }
 
-  var isMuted: Bool? {
-    guard !(isInput && isOutput) else {
-      return nil
-    }
-
-    if isInput {
+  func isMuted(chanelType: ChanelType? = nil) -> Bool? {
+    if (chanelType == nil || chanelType == .input) && isInput {
       return self.isInputMuted
     }
-    if isOutput {
+    if (chanelType == nil || chanelType == .output) && isOutput {
       return self.isOutputMuted
     }
-
     return nil
   }
-
 
   func setInputDeviceMuted(_ isMuted: Bool) throws {
     var newValue = NSNumber(booleanLiteral: isMuted).uint32Value
@@ -177,11 +172,11 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     )
   }
 
-  func setDeviceMuted(_ isMuted: Bool) throws {
-    if isInput {
+  func setDeviceMuted(_ isMuted: Bool, chanelType: ChanelType? = nil) throws {
+    if (chanelType == nil || chanelType == .input) && isInput {
       try setInputDeviceMuted(isMuted)
     }
-    if isOutput {
+    if (chanelType == nil || chanelType == .output) && isOutput {
       try setOutputDeviceMuted(isMuted)
     }
   }
@@ -203,12 +198,12 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     try setOutputDeviceMuted(!isMuted)
   }
 
-  func toggleMute() throws {
-    if isInput {
-      return try toggleInputMute()
+  func toggleMute(chanelType: ChanelType? = nil) throws {
+    if (chanelType == nil || chanelType == .input) && isInput {
+      try toggleInputMute()
     }
-    if isOutput {
-      return try toggleOutputMute()
+    if (chanelType == nil || chanelType == .output) && isOutput {
+      try toggleOutputMute()
     }
   }
 
@@ -303,6 +298,11 @@ extension AudioDevice {
         self = .unknown
       }
     }
+  }
+
+  enum ChanelType: String, ConvertibleFromString, CaseIterable {
+    case input = "input"
+    case output = "output"
   }
 }
 

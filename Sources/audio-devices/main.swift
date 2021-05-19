@@ -289,11 +289,12 @@ final class GetMuteCommand: Command {
   let name = "get"
 
   @Param var deviceId: Int
+  @Param var chanelType: AudioDevice.ChanelType?
 
   func execute() throws {
     let device = try getDevice(deviceId: deviceId)
 
-    if let isMuted = device.isMuted {
+    if let isMuted = device.isMuted(chanelType: chanelType) {
       print(isMuted)
     } else {
       print("\(device.name) does not support muting", to: .standardError)
@@ -307,10 +308,11 @@ final class SetMuteCommand: Command {
 
   @Param var deviceId: Int
   @Param var isMuted: Bool
+  @Param var chanelType: AudioDevice.ChanelType?
 
   func execute() throws {
     let device = try getDevice(deviceId: deviceId)
-    try device.setDeviceMuted(isMuted)
+    try device.setDeviceMuted(isMuted, chanelType: chanelType)
   }
 }
 
@@ -319,10 +321,11 @@ final class ToggleMuteCommand: Command {
   let name = "toggle"
 
   @Param var deviceId: Int
+  @Param var chanelType: AudioDevice.ChanelType?
 
   func execute() throws {
     let device = try getDevice(deviceId: deviceId)
-    try device.toggleMute()
+    try device.toggleMute(chanelType: chanelType)
   }
 }
 
