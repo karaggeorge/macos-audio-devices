@@ -286,13 +286,25 @@ final class MuteGroup: CommandGroup {
 }
 
 final class GetMuteCommand: Command {
+  let shortDescription = "Get device muting state"
   let name = "get"
 
   @Param var deviceId: Int
-  @Param var chanelType: AudioDevice.ChanelType?
+  @Flag("-i", "--input", description: "Get information from input chanel")
+  var isInputChanel: Bool
+  @Flag("-o", "--output", description: "Get information from output chanel")
+  var isOutputChanel: Bool
 
   func execute() throws {
     let device = try getDevice(deviceId: deviceId)
+
+    var chanelType: AudioDevice.ChanelType? = nil
+    if isInputChanel {
+      chanelType = .input
+    }
+    if isOutputChanel {
+      chanelType = .output
+    }
 
     if let isMuted = device.isMuted(chanelType: chanelType) {
       print(isMuted)
@@ -308,9 +320,20 @@ final class SetMuteCommand: Command {
 
   @Param var deviceId: Int
   @Param var isMuted: Bool
-  @Param var chanelType: AudioDevice.ChanelType?
+  @Flag("-i", "--input", description: "Use input chanel")
+  var isInputChanel: Bool
+  @Flag("-o", "--output", description: "Use output chanel")
+  var isOutputChanel: Bool
 
   func execute() throws {
+    var chanelType: AudioDevice.ChanelType? = nil
+    if isInputChanel {
+      chanelType = .input
+    }
+    if isOutputChanel {
+      chanelType = .output
+    }
+
     let device = try getDevice(deviceId: deviceId)
     try device.setDeviceMuted(isMuted, chanelType: chanelType)
   }
@@ -321,9 +344,20 @@ final class ToggleMuteCommand: Command {
   let name = "toggle"
 
   @Param var deviceId: Int
-  @Param var chanelType: AudioDevice.ChanelType?
+  @Flag("-i", "--input", description: "Use input chanel")
+  var isInputChanel: Bool
+  @Flag("-o", "--output", description: "Use output chanel")
+  var isOutputChanel: Bool
 
   func execute() throws {
+    var chanelType: AudioDevice.ChanelType? = nil
+    if isInputChanel {
+      chanelType = .input
+    }
+    if isOutputChanel {
+      chanelType = .output
+    }
+
     let device = try getDevice(deviceId: deviceId)
     try device.toggleMute(chanelType: chanelType)
   }

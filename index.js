@@ -7,12 +7,14 @@ const binary = path.join(electronUtil.fixPathForAsarUnpack(__dirname), 'audio-de
 
 const generateExport = (name, getArgs, callback) => {
   module.exports[name] = async (...inputs) => {
-    const result = await execa(binary, getArgs(...inputs));
+    let args = getArgs(...inputs).filter((value)=>{ return value })
+    const result = await execa(binary, args);
     return callback(result);
   };
 
   module.exports[name].sync = (...inputs) => {
-    const result = execa.sync(binary, getArgs(...inputs));
+    let args = getArgs(...inputs).filter((value)=>{ return value })
+    const result = execa.sync(binary, args);
     return callback(result);
   };
 };
@@ -28,9 +30,18 @@ const parseStdout = ({stdout, stderr}) => {
   return JSON.parse(stdout);
 };
 
-module.exports['ChanelType'] = {
+const ChanelType = {
   input: "input",
   output: "output"
+}
+
+module.exports['ChanelType'] = ChanelType
+
+const getChanelTypeFlag = (chanelType) => {
+  if (chanelType) {
+    return `--${chanelType}`
+  }
+  return null
 }
 
 generateExport('getAllDevices', () => ['list', '--json'], parseStdout);
@@ -57,11 +68,11 @@ generateExport('getOutputDeviceVolume', deviceId => ['volume', 'get', deviceId],
 
 generateExport('setOutputDeviceVolume', (deviceId, volume) => ['volume', 'set', deviceId, volume], throwIfStderr);
 
-generateExport('getDeviceMute', (deviceId, chanelType) => ['mute', 'get', deviceId, chanelType], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
+generateExport('getDeviceMute', (deviceId, chanelType) => ['mute', 'get', deviceId, getChanelTypeFlag(chanelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
 
-generateExport('setDeviceMute', (deviceId, isMuted, chanelType) => ['mute', 'set', deviceId, isMuted, chanelType], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
+generateExport('setDeviceMute', (deviceId, isMuted, chanelType) => ['mute', 'set', deviceId, isMuted, getChanelTypeFlag(chanelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
 
-generateExport('toggleDeviceMute', (deviceId, chanelType) => ['mute', 'toggle', deviceId, chanelType], throwIfStderr);
+generateExport('toggleDeviceMute', (deviceId, chanelType) => ['mute', 'toggle', deviceId, getChanelTypeFlag(chanelType)], throwIfStderr);
 
 generateExport(
   'createAggregateDevice',
