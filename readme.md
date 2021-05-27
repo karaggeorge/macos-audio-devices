@@ -35,7 +35,7 @@ Groups:
 Commands:
   list            List the available audio devices
   get             Get a device by its ID
-  toggle          Change muting state for audio device
+  toggle          Toggle muting state for audio device
   help            Prints help information
 ```
 
@@ -116,6 +116,12 @@ Can be one of:
 - `usb`
 - `virtual`
 - `unknown`
+
+#### `ChannelType: enum`
+
+Can be:
+  - input
+  - output
 
 #### Sync
 
@@ -207,7 +213,7 @@ The [unique ID](#id-number) of the supported output device.
 
 The volume level to set the device to. Must be between 0 and 1, otherwise and error will be thrown.
 
-#### `getDeviceMute(deviceId: number): Promise<void>`
+#### `getDeviceMute(deviceId: number, channelType: ChannelType? = null): Promise<void>`
 
 Get muting state for audio device.
 
@@ -215,13 +221,21 @@ Get muting state for audio device.
 
 The [unique ID](#id-number) of the supported device.
 
-#### `toggleDeviceMute(deviceId: number): Promise<void>`
+##### `channelType: ChannelType`
+
+[optional] [Channel type](#channeltype-enum) to get information from.
+
+#### `toggleDeviceMute(deviceId: number, channelType: ChannelType? = null): Promise<void>`
 
 Toggle muting state for audio device.
 
 ##### `deviceId: number`
 
 The [unique ID](#id-number) of the supported device.
+
+##### `channelType: ChannelType`
+
+[optional] [Channel type](#channeltype-enum) to use.
 
 #### `createAggregateDevice(name: string, mainDeviceId: number, otherDeviceIds: number[], options: object): Promise<Device>`
 
