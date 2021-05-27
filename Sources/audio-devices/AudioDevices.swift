@@ -140,11 +140,11 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     }
   }
 
-  func isMuted(chanelType: ChanelType? = nil) -> Bool? {
-    if (chanelType == nil || chanelType == .input) && isInput {
+  func isMuted(channelType: ChannelType? = nil) -> Bool? {
+    if (channelType == nil || channelType == .input) && isInput {
       return self.isInputMuted
     }
-    if (chanelType == nil || chanelType == .output) && isOutput {
+    if (channelType == nil || channelType == .output) && isOutput {
       return self.isOutputMuted
     }
     return nil
@@ -172,11 +172,11 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     )
   }
 
-  func setDeviceMuted(_ isMuted: Bool, chanelType: ChanelType? = nil) throws {
-    if (chanelType == nil || chanelType == .input) && isInput {
+  func setDeviceMuted(_ isMuted: Bool, channelType: ChannelType? = nil) throws {
+    if (channelType == nil || channelType == .input) && isInput {
       try setInputDeviceMuted(isMuted)
     }
-    if (chanelType == nil || chanelType == .output) && isOutput {
+    if (channelType == nil || channelType == .output) && isOutput {
       try setOutputDeviceMuted(isMuted)
     }
   }
@@ -198,11 +198,11 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     try setOutputDeviceMuted(!isMuted)
   }
 
-  func toggleMute(chanelType: ChanelType? = nil) throws {
-    if (chanelType == nil || chanelType == .input) && isInput {
+  func toggleMute(channelType: ChannelType? = nil) throws {
+    if (channelType == nil || channelType == .input) && isInput {
       try toggleInputMute()
     }
-    if (chanelType == nil || chanelType == .output) && isOutput {
+    if (channelType == nil || channelType == .output) && isOutput {
       try toggleOutputMute()
     }
   }
@@ -300,7 +300,7 @@ extension AudioDevice {
     }
   }
 
-  enum ChanelType: String, ConvertibleFromString, CaseIterable {
+  enum ChannelType: String, ConvertibleFromString, CaseIterable {
     case input = "input"
     case output = "output"
   }

@@ -30,16 +30,16 @@ const parseStdout = ({stdout, stderr}) => {
   return JSON.parse(stdout);
 };
 
-const ChanelType = {
+const ChannelType = {
   input: "input",
   output: "output"
 }
 
-module.exports['ChanelType'] = ChanelType
+module.exports['ChannelType'] = ChannelType
 
-const getChanelTypeFlag = (chanelType) => {
-  if (chanelType) {
-    return `--${chanelType}`
+const getChannelTypeFlag = (channelType) => {
+  if (channelType) {
+    return `--${channelType}`
   }
   return null
 }
@@ -68,11 +68,11 @@ generateExport('getOutputDeviceVolume', deviceId => ['volume', 'get', deviceId],
 
 generateExport('setOutputDeviceVolume', (deviceId, volume) => ['volume', 'set', deviceId, volume], throwIfStderr);
 
-generateExport('getDeviceMute', (deviceId, chanelType) => ['mute', 'get', deviceId, getChanelTypeFlag(chanelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
+generateExport('getDeviceMute', (deviceId, channelType) => ['mute', 'get', deviceId, getChannelTypeFlag(channelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
 
-generateExport('setDeviceMute', (deviceId, isMuted, chanelType) => ['mute', 'set', deviceId, isMuted, getChanelTypeFlag(chanelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
+generateExport('setDeviceMute', (deviceId, isMuted, channelType) => ['mute', 'set', deviceId, isMuted, getChannelTypeFlag(channelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
 
-generateExport('toggleDeviceMute', (deviceId, chanelType) => ['mute', 'toggle', deviceId, getChanelTypeFlag(chanelType)], throwIfStderr);
+generateExport('toggleDeviceMute', (deviceId, channelType) => ['mute', 'toggle', deviceId, getChannelTypeFlag(channelType)], throwIfStderr);
 
 generateExport(
   'createAggregateDevice',

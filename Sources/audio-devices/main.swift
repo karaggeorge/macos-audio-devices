@@ -290,23 +290,23 @@ final class GetMuteCommand: Command {
   let name = "get"
 
   @Param var deviceId: Int
-  @Flag("-i", "--input", description: "Get information from input chanel")
-  var isInputChanel: Bool
-  @Flag("-o", "--output", description: "Get information from output chanel")
-  var isOutputChanel: Bool
+  @Flag("-i", "--input", description: "Get information from input channel")
+  var isInputChannel: Bool
+  @Flag("-o", "--output", description: "Get information from output channel")
+  var isOutputChannel: Bool
 
   func execute() throws {
     let device = try getDevice(deviceId: deviceId)
 
-    var chanelType: AudioDevice.ChanelType? = nil
-    if isInputChanel {
-      chanelType = .input
+    var channelType: AudioDevice.ChannelType? = nil
+    if isInputChannel {
+      channelType = .input
     }
-    if isOutputChanel {
-      chanelType = .output
+    if isOutputChannel {
+      channelType = .output
     }
 
-    if let isMuted = device.isMuted(chanelType: chanelType) {
+    if let isMuted = device.isMuted(channelType: channelType) {
       print(isMuted)
     } else {
       print("\(device.name) does not support muting", to: .standardError)
@@ -320,46 +320,46 @@ final class SetMuteCommand: Command {
 
   @Param var deviceId: Int
   @Param var isMuted: Bool
-  @Flag("-i", "--input", description: "Use input chanel")
-  var isInputChanel: Bool
-  @Flag("-o", "--output", description: "Use output chanel")
-  var isOutputChanel: Bool
+  @Flag("-i", "--input", description: "Use input channel")
+  var isInputChannel: Bool
+  @Flag("-o", "--output", description: "Use output channel")
+  var isOutputChannel: Bool
 
   func execute() throws {
-    var chanelType: AudioDevice.ChanelType? = nil
-    if isInputChanel {
-      chanelType = .input
+    var channelType: AudioDevice.ChannelType? = nil
+    if isInputChannel {
+      channelType = .input
     }
-    if isOutputChanel {
-      chanelType = .output
+    if isOutputChannel {
+      channelType = .output
     }
 
     let device = try getDevice(deviceId: deviceId)
-    try device.setDeviceMuted(isMuted, chanelType: chanelType)
+    try device.setDeviceMuted(isMuted, channelType: channelType)
   }
 }
 
 final class ToggleMuteCommand: Command {
-  let shortDescription = "Change device muting state"
+  let shortDescription = "Toggle device muting state"
   let name = "toggle"
 
   @Param var deviceId: Int
-  @Flag("-i", "--input", description: "Use input chanel")
-  var isInputChanel: Bool
-  @Flag("-o", "--output", description: "Use output chanel")
-  var isOutputChanel: Bool
+  @Flag("-i", "--input", description: "Use input channel")
+  var isInputChannel: Bool
+  @Flag("-o", "--output", description: "Use output channel")
+  var isOutputChannel: Bool
 
   func execute() throws {
-    var chanelType: AudioDevice.ChanelType? = nil
-    if isInputChanel {
-      chanelType = .input
+    var channelType: AudioDevice.ChannelType? = nil
+    if isInputChannel {
+      channelType = .input
     }
-    if isOutputChanel {
-      chanelType = .output
+    if isOutputChannel {
+      channelType = .output
     }
 
     let device = try getDevice(deviceId: deviceId)
-    try device.toggleMute(chanelType: chanelType)
+    try device.toggleMute(channelType: channelType)
   }
 }
 
