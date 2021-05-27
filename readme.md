@@ -120,8 +120,8 @@ Can be one of:
 #### `ChannelType: enum`
 
 Can be:
-  - input
-  - output
+  - `input`
+  - `output`
 
 #### Sync
 
