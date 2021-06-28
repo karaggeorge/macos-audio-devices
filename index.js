@@ -7,13 +7,13 @@ const binary = path.join(electronUtil.fixPathForAsarUnpack(__dirname), 'audio-de
 
 const generateExport = (name, getArgs, callback) => {
   module.exports[name] = async (...inputs) => {
-    let args = getArgs(...inputs).filter((value)=>{ return value })
+    let args = getArgs(...inputs).filter(Boolean)
     const result = await execa(binary, args);
     return callback(result);
   };
 
   module.exports[name].sync = (...inputs) => {
-    let args = getArgs(...inputs).filter((value)=>{ return value })
+    let args = getArgs(...inputs).filter(Boolean)
     const result = execa.sync(binary, args);
     return callback(result);
   };
@@ -37,7 +37,7 @@ const ChannelType = {
 
 module.exports['ChannelType'] = ChannelType
 
-const getChannelTypeFlag = (channelType) => {
+const getChannelTypeFlag = channelType => {
   if (channelType) {
     return `--${channelType}`
   }
