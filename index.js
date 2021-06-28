@@ -7,12 +7,14 @@ const binary = path.join(electronUtil.fixPathForAsarUnpack(__dirname), 'audio-de
 
 const generateExport = (name, getArgs, callback) => {
   module.exports[name] = async (...inputs) => {
-    const result = await execa(binary, getArgs(...inputs));
+    let args = getArgs(...inputs).filter(Boolean)
+    const result = await execa(binary, args);
     return callback(result);
   };
 
   module.exports[name].sync = (...inputs) => {
-    const result = execa.sync(binary, getArgs(...inputs));
+    let args = getArgs(...inputs).filter(Boolean)
+    const result = execa.sync(binary, args);
     return callback(result);
   };
 };
@@ -27,6 +29,20 @@ const parseStdout = ({stdout, stderr}) => {
   throwIfStderr({stderr});
   return JSON.parse(stdout);
 };
+
+const ChannelType = {
+  input: "input",
+  output: "output"
+}
+
+module.exports['ChannelType'] = ChannelType
+
+const getChannelTypeFlag = channelType => {
+  if (channelType) {
+    return `--${channelType}`
+  }
+  return null
+}
 
 generateExport('getAllDevices', () => ['list', '--json'], parseStdout);
 
@@ -51,6 +67,12 @@ generateExport('setDefaultSystemDevice', deviceId => ['system', 'set', deviceId]
 generateExport('getOutputDeviceVolume', deviceId => ['volume', 'get', deviceId], ({stdout, stderr}) => stderr ? undefined : stdout);
 
 generateExport('setOutputDeviceVolume', (deviceId, volume) => ['volume', 'set', deviceId, volume], throwIfStderr);
+
+generateExport('getDeviceMute', (deviceId, channelType) => ['mute', 'get', deviceId, getChannelTypeFlag(channelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
+
+generateExport('setDeviceMute', (deviceId, isMuted, channelType) => ['mute', 'set', deviceId, isMuted, getChannelTypeFlag(channelType)], ({stdout, stderr}) => stderr ? undefined : stdout == "true");
+
+generateExport('toggleDeviceMute', (deviceId, channelType) => ['mute', 'toggle', deviceId, getChannelTypeFlag(channelType)], throwIfStderr);
 
 generateExport(
   'createAggregateDevice',

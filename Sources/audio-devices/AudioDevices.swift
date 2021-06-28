@@ -1,5 +1,6 @@
 import Cocoa
 import CoreAudio
+import SwiftCLI
 
 struct AudioDevice: Hashable, Codable, Identifiable {
   enum Error: Swift.Error {
@@ -7,6 +8,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     case invalidDevice
     case volumeNotSupported
     case invalidVolumeValue
+    case muteNotSupported
   }
 
   let id: AudioDeviceID
@@ -106,6 +108,105 @@ struct AudioDevice: Hashable, Codable, Identifiable {
     )
   }
 
+  var isInputMuted: Bool? {
+    do {
+      var muteValue: UInt32 = 0
+      try CoreAudioData.get(
+        id: id,
+        selector: kAudioDevicePropertyMute,
+        scope: kAudioDevicePropertyScopeInput,
+        value: &muteValue
+      )
+      
+      return muteValue != 0
+    } catch {
+      return nil
+    }
+  }
+  
+  var isOutputMuted: Bool? {
+    do {
+      var muteValue: UInt32 = 0
+      try CoreAudioData.get(
+        id: id,
+        selector: kAudioDevicePropertyMute,
+        scope: kAudioDevicePropertyScopeOutput,
+        value: &muteValue
+      )
+      
+      return muteValue != 0
+    } catch {
+      return nil
+    }
+  }
+
+  func isMuted(channelType: ChannelType? = nil) -> Bool? {
+    if (channelType == nil || channelType == .input) && isInput {
+      return self.isInputMuted
+    }
+    if (channelType == nil || channelType == .output) && isOutput {
+      return self.isOutputMuted
+    }
+    return nil
+  }
+
+  func setInputDeviceMuted(_ isMuted: Bool) throws {
+    var newValue = NSNumber(booleanLiteral: isMuted).uint32Value
+
+    try CoreAudioData.set(
+      id: id,
+      selector: kAudioDevicePropertyMute,
+      scope: kAudioDevicePropertyScopeInput,
+      value: &newValue
+    )
+  }
+
+  func setOutputDeviceMuted(_ isMuted: Bool) throws {
+    var newValue = NSNumber(booleanLiteral: isMuted).uint32Value
+
+    try CoreAudioData.set(
+      id: id,
+      selector: kAudioDevicePropertyMute,
+      scope: kAudioDevicePropertyScopeOutput,
+      value: &newValue
+    )
+  }
+
+  func setDeviceMuted(_ isMuted: Bool, channelType: ChannelType? = nil) throws {
+    if (channelType == nil || channelType == .input) && isInput {
+      try setInputDeviceMuted(isMuted)
+    }
+    if (channelType == nil || channelType == .output) && isOutput {
+      try setOutputDeviceMuted(isMuted)
+    }
+  }
+
+
+  func toggleInputMute() throws {
+    guard let isMuted = self.isInputMuted else {
+      throw AudioDevice.Error.muteNotSupported
+    }
+
+    try setInputDeviceMuted(!isMuted)
+  }
+
+  func toggleOutputMute() throws {
+    guard let isMuted = self.isOutputMuted else {
+      throw AudioDevice.Error.muteNotSupported
+    }
+
+    try setOutputDeviceMuted(!isMuted)
+  }
+
+  func toggleMute(channelType: ChannelType? = nil) throws {
+    if (channelType == nil || channelType == .input) && isInput {
+      try toggleInputMute()
+    }
+    if (channelType == nil || channelType == .output) && isOutput {
+      try toggleOutputMute()
+    }
+  }
+
   func isDefault(for deviceType: DeviceType) -> Bool {
     guard let defaultDevice = try? Self.getDefaultDevice(for: deviceType) else {
       return false
@@ -197,6 +298,11 @@ extension AudioDevice {
         self = .unknown
       }
     }
+  }
+
+  enum ChannelType: String, ConvertibleFromString, CaseIterable {
+    case input = "input"
+    case output = "output"
   }
 }
 

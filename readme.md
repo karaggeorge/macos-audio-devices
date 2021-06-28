@@ -29,11 +29,13 @@ Groups:
   input           Get or set the default input device
   system          Get or set the default device for system sounds
   volume          Get or set the volume of an output device
+  mute            Mute or unmute audio device
   aggregate       Create or delete aggregate audio devices
 
 Commands:
   list            List the available audio devices
   get             Get a device by its ID
+  toggle          Toggle muting state for audio device
   help            Prints help information
 ```
 
@@ -114,6 +116,12 @@ Can be one of:
 - `usb`
 - `virtual`
 - `unknown`
+
+#### `ChannelType: enum`
+
+Can be:
+  - `input`
+  - `output`
 
 #### Sync
 
@@ -204,6 +212,30 @@ The [unique ID](#id-number) of the supported output device.
 ##### `volume: number`
 
 The volume level to set the device to. Must be between 0 and 1, otherwise and error will be thrown.
+
+#### `getDeviceMute(deviceId: number, channelType: ChannelType? = null): Promise<void>`
+
+Get muting state for audio device.
+
+##### `deviceId: number`
+
+The [unique ID](#id-number) of the supported device.
+
+##### `channelType: ChannelType`
+
+[optional] [Channel type](#channeltype-enum) to get information from.
+
+#### `toggleDeviceMute(deviceId: number, channelType: ChannelType? = null): Promise<void>`
+
+Toggle muting state for audio device.
+
+##### `deviceId: number`
+
+The [unique ID](#id-number) of the supported device.
+
+##### `channelType: ChannelType`
+
+[optional] [Channel type](#channeltype-enum) to use.
 
 #### `createAggregateDevice(name: string, mainDeviceId: number, otherDeviceIds: number[], options: object): Promise<Device>`
 

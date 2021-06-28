@@ -1,4 +1,3 @@
-
 export type TransportType = 'avb'
   | 'aggregate'
   | 'airplay'
@@ -14,6 +13,11 @@ export type TransportType = 'avb'
   | 'usb'
   | 'virtual'
   | 'unknown'
+
+export enum ChannelType {
+  input = "input",
+  output = "output"
+}  
 
 export interface Device {
   /*
@@ -368,6 +372,94 @@ export const setOutputDeviceVolume: {
   ```
   */
   sync: (deviceId: number, volume: number) => void;
+};
+
+export const getDeviceMute: {
+  /**
+  Get the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param channelType - Channel type (input or output).
+  @returns A promise that resolves with the mute state of the device.
+
+  @example
+  ```
+  const mute = await getDeviceMute(74, ChannelType.input);
+  ```
+  */
+  (deviceId: number, channelType: ChannelType? = nil): Promise<boolean>;
+
+  /**
+  Get the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param channelType - Channel type (input or output).
+  @returns The mute state of the device.
+
+  @example
+  ```
+  const mute = getDeviceMute.sync(74, ChannelType.input);
+  ```
+  */
+  sync: (deviceId: number, channelType: ChannelType? = nil) => boolean;
+};
+
+export const setDeviceMute: {
+  /**
+  Set the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param isMuted  - Boolean value which indicates whether device is going to mute or not.
+  @param channelType - Channel type (input or output).
+
+  @example
+  ```
+  await setDeviceMute(74, false, ChannelType.input);
+  ```
+  */
+  (deviceId: number, isMuted: boolean, channelType: ChannelType? = nil): Promise<void>;
+
+  /**
+  Set the mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param isMuted  - Boolean value which indicates whether device is going to mute or not.
+  @param channelType - Channel type (input or output).
+
+  @example
+  ```
+  setDeviceMute.sync(74, false, ChannelType.input);
+  ```
+  */
+  sync: (deviceId: number, isMuted: boolean, channelType: ChannelType? = nil) => void;
+};
+
+export const toggleDeviceMute: {
+  /**
+  Toggle mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param channelType - Channel type (input or output).
+
+  @example
+  ```
+  await toggleDeviceMute(74, ChannelType.input);
+  ```
+  */
+  (deviceId: number, channelType: ChannelType? = nil): Promise<void>;
+
+  /**
+  Toggle mute state of an device that supports it.
+
+  @param deviceId - The ID of the device.
+  @param channelType - Channel type (input or output).
+
+  @example
+  ```
+  toggleDeviceMute.sync(74, ChannelType.input);
+  ```
+  */
+  sync: (deviceId: number, channelType: ChannelType? = nil) => void;
 };
 
 export const createAggregateDevice: {
