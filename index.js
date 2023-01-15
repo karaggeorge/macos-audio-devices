@@ -36,6 +36,8 @@ generateExport('getOutputDevices', () => ['list', '--output', '--json'], parseSt
 
 generateExport('getDevice', deviceId => ['get', '--json', deviceId], parseStdout);
 
+generateExport('getDeviceByUID', deviceUID => ['getDeviceByUID', '--json', deviceUID], parseStdout);
+
 generateExport('getDefaultOutputDevice', () => ['output', 'get', '--json'], parseStdout);
 
 generateExport('getDefaultInputDevice', () => ['input', 'get', '--json'], parseStdout);

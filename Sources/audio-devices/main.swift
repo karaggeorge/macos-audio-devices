@@ -16,6 +16,21 @@ func getDevice(deviceId: Int) throws -> AudioDevice {
   }
 }
 
+func getDeviceByUID(deviceUID: String) throws -> AudioDevice {
+  do {
+    let deviceId = try AudioDevice.getDeviceIDByUID(deviceUID: deviceUID)
+    return try AudioDevice(withId: UInt32(deviceId))
+  } catch AudioDevice.Error.invalidDeviceUID {
+    print("No device exists with uid \(deviceUID)", to: .standardError)
+    exit(1)
+  } catch AudioDevice.Error.invalidDeviceId {
+    print("No device exists with uid \(deviceUID)", to: .standardError)
+    exit(1)
+  } catch {
+    throw error
+  }
+}
+
 final class ListCommand: Command {
   let name = "list"
   let shortDescription = "List the available audio devices"
@@ -79,6 +94,32 @@ final class GetCommand: Command {
 
   func execute() throws {
     let device = try getDevice(deviceId: deviceId)
+
+    if json {
+      do {
+        print(try toJson(device))
+      } catch {
+        print("{}")
+      }
+
+      return
+    }
+
+    printDevice(device)
+  }
+}
+
+final class GetByUIDCommand: Command {
+  let name = "getByUID"
+  let shortDescription = "Get a device by its UID"
+
+  @Flag("--json", description: "Print the result in JSON format")
+  var json: Bool
+
+  @Param var deviceUID: String
+
+  func execute() throws {
+    let device = try getDeviceByUID(deviceUID: deviceUID)
 
     if json {
       do {
@@ -265,7 +306,7 @@ final class SetVolumeCommand: Command {
   @Param var volume: Double
 
   func execute() throws {
-    var device = try getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
 
     do {
       try device.setVolume(volume)
@@ -342,6 +383,7 @@ let audioDevices = CLI(name: "audio-devices")
 audioDevices.commands = [
   ListCommand(),
   GetCommand(),
+  GetByUIDCommand(),
   OutputGroup(),
   InputGroup(),
   SystemGroup(),

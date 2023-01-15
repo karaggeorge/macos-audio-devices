@@ -91,7 +91,7 @@ export const getDevice: {
   const device = await getDevice(73);
   ```
   */
-  (): Promise<Device>;
+  (deviceId: number): Promise<Device>;
 
   /**
   Get an audio device by ID.
@@ -103,7 +103,33 @@ export const getDevice: {
   const device = getDevice.sync(73);
   ```
   */
-  sync: () => Device;
+  sync: (deviceId: number) => Device;
+};
+
+export const getDeviceByUID: {
+  /**
+  Get an audio device by UID.
+
+  @returns A promise that resolves with the device.
+
+  @example
+  ```
+  const device = await getDeviceByUID("BGMDevice");
+  ```
+  */
+  (deviceUID: string): Promise<Device>;
+
+  /**
+  Get an audio device by ID.
+
+  @returns The device.
+
+  @example
+  ```
+  const device = getDevice.sync(73);
+  ```
+  */
+  sync: (deviceId: number) => Device;
 };
 
 export const getOutputDevices: {
