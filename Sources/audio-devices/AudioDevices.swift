@@ -12,6 +12,7 @@ struct AudioDevice: Hashable, Codable, Identifiable {
   let id: AudioDeviceID
   let name: String
   let uid: String
+  let isHidden: Bool
   let isInput: Bool
   let isOutput: Bool
   var transportType: TransportType
@@ -21,16 +22,19 @@ struct AudioDevice: Hashable, Codable, Identifiable {
 
     var deviceName = "" as CFString
     var deviceUID = "" as CFString
+    var isHidden: UInt32 = 0
 
     do {
       try CoreAudioData.get(id: deviceId, selector: kAudioObjectPropertyName, value: &deviceName)
       try CoreAudioData.get(id: deviceId, selector: kAudioDevicePropertyDeviceUID, value: &deviceUID)
+      try CoreAudioData.get(id: deviceId, selector: kAudioDevicePropertyIsHidden, value: &isHidden)
     } catch {
       throw Error.invalidDeviceId
     }
 
     self.name = deviceName as String
     self.uid = deviceUID as String
+    self.isHidden = isHidden == 1 ? true : false
 
     var deviceTransportType: UInt32 = 0
     do {
@@ -248,6 +252,18 @@ extension AudioDevice {
     try CoreAudioData.set(
       selector: deviceType.selector,
       value: &deviceId
+    )
+  }
+
+  static func setIsHidden(device: Self, isHidden: Bool) throws {
+
+    var deviceId = device.id
+
+    var value: UInt32 = UInt32(isHidden ? 1 : 0)
+    try CoreAudioData.set(
+      id: deviceId,
+      selector: kAudioDevicePropertyIsHidden,
+      value: &value
     )
   }
 
