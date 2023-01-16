@@ -4,6 +4,7 @@ import CoreAudio
 struct AudioDevice: Hashable, Codable, Identifiable {
   enum Error: Swift.Error {
     case invalidDeviceId
+    case invalidDeviceUID
     case invalidDevice
     case volumeNotSupported
     case invalidVolumeValue
@@ -225,6 +226,29 @@ extension AudioDevice {
 
   static var output: [Self] {
     all.filter { $0.isOutput }
+  }
+
+  static func getDeviceIDByUID(deviceUID: String) throws -> AudioObjectID {
+      var deviceUIDCFString = deviceUID as CFString
+      var deviceID = kAudioDeviceUnknown
+      var propertyAddress = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDeviceForUID, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMaster)
+
+      let dataSize_CFString = UInt32(MemoryLayout<CFString>.stride)
+      let dataSize_AudioObjectID = UInt32(MemoryLayout<AudioObjectID>.stride)
+    
+      var translation = AudioValueTranslation(
+        mInputData: &deviceUIDCFString, // Warning: "Inout expression creates a temporary pointer, but argument 'mInputData' should be a pointer that outlives the call to 'init(mInputData:mInputDataSize:mOutputData:mOutputDataSize:)'"
+        mInputDataSize: dataSize_CFString,
+        mOutputData: &deviceID, // Warning: "Inout expression creates a temporary pointer, but argument 'mOutputData' should be a pointer that outlives the call to 'init(mInputData:mInputDataSize:mOutputData:mOutputDataSize:)'"
+        mOutputDataSize: dataSize_AudioObjectID
+      )
+      var specifierSize = UInt32(MemoryLayout<AudioValueTranslation>.stride)
+      let result = AudioObjectGetPropertyData(UInt32(kAudioObjectSystemObject), &propertyAddress, 0, nil, &specifierSize, &translation)
+      guard result == kAudioHardwareNoError, deviceID != kAudioDeviceUnknown else {
+          throw Error.invalidDeviceUID
+      }
+
+      return deviceID
   }
 
   static func getDefaultDevice(for deviceType: DeviceType) throws -> Self {
