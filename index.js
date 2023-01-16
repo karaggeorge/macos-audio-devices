@@ -42,6 +42,8 @@ generateExport('getDefaultInputDevice', () => ['input', 'get', '--json'], parseS
 
 generateExport('getDefaultSystemDevice', () => ['system', 'get', '--json'], parseStdout);
 
+generateExport('setIsHiddenDeviceProperty', (deviceId, isHidden) => ['output', 'set', deviceId, isHidden], throwIfStderr);
+
 generateExport('setDefaultOutputDevice', deviceId => ['output', 'set', deviceId], throwIfStderr);
 
 generateExport('setDefaultInputDevice', deviceId => ['input', 'set', deviceId], throwIfStderr);

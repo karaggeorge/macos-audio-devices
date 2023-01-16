@@ -142,6 +142,27 @@ final class SetOutputCommand: Command {
   }
 }
 
+final class SetIsHiddenCommand: Command {
+  let name = "setIsHiddenDeviceProperty"
+
+  @Param var deviceId: Int
+  @Param var isHidden: Bool
+
+  func execute() throws {
+    let device = try getDevice(deviceId: deviceId)
+    print("device id found while setIsHiddenCommand \(deviceId)")
+
+    do {
+      try AudioDevice.setIsHidden(device: device, isHidden: isHidden)
+      print("Set is hidden device property was set to \(device.name)")
+    } catch AudioDevice.Error.invalidDevice {
+      print("\(device.name) is not an output device", to: .standardError)
+    } catch {
+      throw error
+    }
+  }
+}
+
 final class InputGroup: CommandGroup {
   let shortDescription = "Get or set the default input device"
   let name = "input"
@@ -342,6 +363,7 @@ let audioDevices = CLI(name: "audio-devices")
 audioDevices.commands = [
   ListCommand(),
   GetCommand(),
+  SetIsHiddenCommand(),
   OutputGroup(),
   InputGroup(),
   SystemGroup(),
