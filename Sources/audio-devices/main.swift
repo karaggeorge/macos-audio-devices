@@ -265,7 +265,7 @@ final class SetVolumeCommand: Command {
   @Param var volume: Double
 
   func execute() throws {
-    var device = try getDevice(deviceId: deviceId)
+    let device = try getDevice(deviceId: deviceId)
 
     do {
       try device.setVolume(volume)
